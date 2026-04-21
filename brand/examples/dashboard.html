@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Miser — API Spend Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ────────────────────────────────────────────────── */
+    :root {
+      --paper:      #F3EDE1;
+      --paper-2:    #EBE4D4;
+      --ink:        #1C1A17;
+      --ink-2:      #5A544A;
+      --ink-3:      #8A8275;
+      --accent:     #2F5741;
+      --accent-2:   #7A3A2A;
+      --line:       rgba(28, 26, 23, 0.14);
+      --serif:      'Source Serif 4', Georgia, serif;
+      --sans:       'Inter', system-ui, sans-serif;
+      --mono:       'JetBrains Mono', 'SF Mono', monospace;
+      --radius:     4px;
+      --ease:       cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--serif);
+      font-size: 15px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────────────── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 32px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    .site-header {
+      border-bottom: 1px solid var(--line);
+      padding: 20px 0;
+    }
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .tally-mark {
+      flex-shrink: 0;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 22px;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+    }
+    .wordmark span {
+      color: var(--accent);
+      font-style: italic;
+    }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .status-dot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .status-dot::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--ink-3);
+      transition: background 300ms var(--ease);
+    }
+    .status-dot.live::before {
+      background: var(--accent);
+      box-shadow: 0 0 0 2px rgba(47, 87, 65, 0.2);
+    }
+    .date-display {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+
+    /* ── Page heading ─────────────────────────────────────────────────── */
+    .page-heading {
+      padding: 48px 0 40px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 40px;
+    }
+    .kicker {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 12px;
+    }
+    .page-heading h1 {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 40px;
+      line-height: 1.1;
+      letter-spacing: -0.015em;
+      max-width: 640px;
+    }
+    .page-heading h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+    .page-lede {
+      margin-top: 16px;
+      font-family: var(--serif);
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--ink-2);
+      max-width: 520px;
+    }
+    .page-lede .aside {
+      font-style: italic;
+      color: var(--ink-3);
+    }
+
+    /* ── Stat cards ───────────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--line);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: var(--paper);
+      padding: 24px 24px 20px;
+    }
+    .stat-card:hover {
+      background: var(--paper-2);
+      transition: background 200ms var(--ease);
+    }
+    .stat-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      margin-bottom: 10px;
+    }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 32px;
+      font-weight: 400;
+      line-height: 1;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.warn   { color: var(--accent-2); }
+    .stat-sub {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+    .cache-bar-wrap {
+      height: 4px;
+      background: var(--paper-2);
+      border-radius: 2px;
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    .cache-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 600ms var(--ease), background-color 600ms var(--ease);
+    }
+    .cache-bar-fill.good { background-color: var(--accent); }
+    .cache-bar-fill.ok   { background-color: var(--ink-2); }
+    .cache-bar-fill.warn { background-color: var(--accent-2); }
+
+    /* ── Two-column layout ────────────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 800px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .main-grid  { grid-template-columns: 1fr; }
+    }
+
+    /* ── Panel ────────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .panel-count {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+    .panel-body {
+      padding: 0;
+    }
+
+    /* ── Source rows ──────────────────────────────────────────────────── */
+    .source-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      gap: 12px;
+      transition: background 150ms var(--ease);
+    }
+    .source-row:last-child { border-bottom: none; }
+    .source-row:hover { background: var(--paper); }
+    .source-name {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--ink);
+      min-width: 90px;
+    }
+    .source-bar-wrap {
+      flex: 1;
+      height: 4px;
+      background: var(--line);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .source-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 500ms var(--ease);
+    }
+    .source-cost {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--ink-2);
+      min-width: 64px;
+      text-align: right;
+    }
+    .source-calls {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+      min-width: 40px;
+      text-align: right;
+    }
+    .source-cache {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 48px 20px;
+      text-align: center;
+    }
+    .empty-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      opacity: 0.3;
+    }
+    .empty-heading {
+      font-family: var(--serif);
+      font-size: 17px;
+      color: var(--ink-2);
+      margin-bottom: 8px;
+    }
+    .empty-body {
+      font-family: var(--sans);
+      font-size: 13px;
+      color: var(--ink-3);
+      max-width: 260px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+    .empty-code {
+      display: inline-block;
+      margin-top: 12px;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-2);
+    }
+
+    /* ── Call feed ────────────────────────────────────────────────────── */
+    .call-row {
+      display: flex;
+      align-items: flex-start;
+      padding: 11px 20px;
+      border-bottom: 1px solid var(--line);
+      gap: 10px;
+      animation: fadeIn 300ms var(--ease);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .call-row:last-child { border-bottom: none; }
+    .call-time {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      min-width: 52px;
+      padding-top: 1px;
+    }
+    .call-tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      background: var(--line);
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    .call-tag.claude-code { background: rgba(47,87,65,0.12); color: var(--accent); }
+    .call-tag.cursor      { background: rgba(47,87,65,0.08); color: var(--ink-2); }
+    .call-tag.simulatte   { background: rgba(122,58,42,0.08); color: var(--accent-2); }
+    .call-model {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .call-cost {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink);
+      min-width: 52px;
+      text-align: right;
+    }
+    .call-badges {
+      display: flex;
+      gap: 4px;
+    }
+    .badge {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.05em;
+      padding: 1px 5px;
+      border-radius: 2px;
+      text-transform: uppercase;
+    }
+    .badge-hit    { background: rgba(47,87,65,0.15);  color: var(--accent);   }
+    .badge-bust   { background: rgba(122,58,42,0.15); color: var(--accent-2); }
+    .badge-routed { background: rgba(90,84,74,0.15);  color: var(--ink-2);
+                    border: 1px solid rgba(90,84,74,0.3); cursor: default; }
+    .badge-openai  { background: rgba(16,163,127,0.12); color: #0d7a61;
+                     border: 1px solid rgba(16,163,127,0.25); }
+    .badge-gemini  { background: rgba(66,133,244,0.12); color: #1a56c4;
+                     border: 1px solid rgba(66,133,244,0.25); }
+
+    /* ── Integration map ──────────────────────────────────────────────── */
+    .integration-section {
+      margin-bottom: 48px;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+    }
+    .section-sub {
+      font-size: 13px;
+      color: var(--ink-3);
+    }
+    .integration-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .integration-card {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .int-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .int-name {
+      font-family: var(--serif);
+      font-weight: 400;
+      font-size: 15px;
+      color: var(--ink);
+    }
+    .int-status {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 2px;
+    }
+    .int-status.active {
+      background: rgba(47,87,65,0.15);
+      color: var(--accent);
+    }
+    .int-status.inactive {
+      background: var(--line);
+      color: var(--ink-3);
+    }
+    .int-status.future {
+      background: rgba(47,87,65,0.06);
+      color: var(--ink-3);
+      border: 1px dashed rgba(47,87,65,0.3);
+    }
+    .int-desc {
+      font-size: 12px;
+      color: var(--ink-3);
+      line-height: 1.45;
+    }
+    .int-method {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      margin-top: 2px;
+    }
+
+    /* ── Receipt / footer ─────────────────────────────────────────────── */
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 13px;
+      color: var(--ink-2);
+      border-bottom: 1px solid var(--line);
+    }
+    .receipt-row .amt {
+      font-family: var(--mono);
+      color: var(--accent);
+    }
+    .receipt-total {
+      margin-top: 12px;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .receipt-total .label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .receipt-total .big {
+      font-family: var(--serif);
+      font-size: 32px;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Site footer ──────────────────────────────────────────────────── */
+    .site-footer {
+      border-top: 1px solid var(--line);
+      padding: 24px 0;
+      margin-top: 48px;
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .footer-note {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+
+    /* ── Ledger line device ───────────────────────────────────────────── */
+    .ledger-device {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .ledger-line {
+      width: 80px;
+      height: 10px;
+      position: relative;
+      display: inline-block;
+    }
+    .ledger-line::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      height: 1.5px;
+      background: var(--ink-3);
+    }
+    .ledger-line::after {
+      content: '';
+      position: absolute;
+      left: 58%; top: 0; bottom: 0;
+      width: 1.5px;
+      background: var(--accent);
+    }
+
+    /* ── History chart ───────────────────────────────────────────────── */
+    .chart-panel {
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .chart-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .chart-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+    }
+    .chart-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .chart-delta {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+    }
+    .chart-delta.up   { color: var(--accent-2); }
+    .chart-delta.down { color: var(--accent); }
+    .chart-legend {
+      display: flex;
+      gap: 12px;
+    }
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+    }
+    .chart-legend-swatch {
+      width: 10px;
+      height: 3px;
+      border-radius: 1px;
+      flex-shrink: 0;
+    }
+    .chart-body {
+      padding: 20px 20px 16px;
+    }
+    .chart-svg-wrap {
+      width: 100%;
+      position: relative;
+    }
+    .chart-svg-wrap svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+    .chart-x-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      padding: 0 2px;
+    }
+    .chart-x-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.04em;
+      text-align: center;
+      flex: 1;
+    }
+    .chart-x-label.today {
+      color: var(--ink-2);
+      font-weight: 500;
+    }
+    /* Tooltip */
+    .chart-tooltip {
+      position: absolute;
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 8px 12px;
+      border-radius: 3px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 150ms;
+      white-space: nowrap;
+      z-index: 10;
+    }
+    .chart-tooltip.visible { opacity: 1; }
+
+    /* ── Rule ─────────────────────────────────────────────────────────── */
+    hr.rule {
+      border: none;
+      border-top: 1px solid var(--line);
+      margin: 32px 0;
+    }
+
+    /* ── Refresh indicator ────────────────────────────────────────────── */
+    .refresh-notice {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      transition: opacity 300ms;
+    }
+    .refresh-notice.active { color: var(--accent); }
+
+    /* ── Cache bust warning ───────────────────────────────────────────── */
+    .bust-banner {
+      background: rgba(122,58,42,0.08);
+      border: 1px solid rgba(122,58,42,0.2);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--ink-2);
+    }
+    .bust-banner strong { color: var(--accent-2); }
+    .bust-banner.hidden { display: none; }
+
+    /* ── Routing rules panel ─────────────────────────────────────────────── */
+    .routing-section {
+      margin-bottom: 48px;
+    }
+    .routing-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .routing-table th {
+      text-align: left;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 0 12px 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .routing-table th:first-child { padding-left: 0; }
+    .routing-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    .routing-table td:first-child { padding-left: 0; }
+    .routing-table tr.rule-disabled td {
+      opacity: 0.45;
+    }
+    .routing-table tr.rule-disabled td:last-child {
+      opacity: 1;   /* keep toggle visible at full opacity */
+    }
+    .rule-type {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    .rule-priority {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+      min-width: 28px;
+    }
+    .rule-desc {
+      color: var(--ink);
+      font-size: 13px;
+      max-width: 280px;
+    }
+    .rule-mapping {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-2);
+      white-space: nowrap;
+    }
+    .rule-mapping .arrow { color: var(--ink-3); margin: 0 4px; }
+    .rule-mapping .to-model { color: var(--accent); }
+    /* Toggle switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+    }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: var(--ink-3);
+      border-radius: 50%;
+      transition: transform 0.2s var(--ease), background 0.2s var(--ease);
+    }
+    .toggle input:checked + .toggle-track {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .toggle input:checked + .toggle-track::after {
+      transform: translateX(16px);
+      background: var(--paper);
+    }
+    .toggle input:disabled + .toggle-track { cursor: wait; }
+    .toggle-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--ink-3);
+      min-width: 44px;
+    }
+    .routing-empty {
+      padding: 40px 0;
+      color: var(--ink-3);
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* ── Runway extended ─────────────────────────────────────────────── */
+    .runway-section {
+      margin-bottom: 40px;
+    }
+    .runway-row {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--line);
+      gap: 14px;
+      transition: background 150ms var(--ease);
+    }
+    .runway-row:last-child { border-bottom: none; }
+    .runway-row:hover { background: var(--paper); }
+    .runway-tool {
+      font-family: var(--serif);
+      font-size: 15px;
+      color: var(--ink);
+      min-width: 108px;
+    }
+    .runway-status {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 2px 7px;
+      border-radius: 2px;
+      min-width: 86px;
+      text-align: center;
+    }
+    @media (max-width: 640px) {
+      .runway-tokens,
+      .runway-bar-wrap { display: none; }
+      .runway-row { gap: 10px; }
+    }
+    .runway-status.active {
+      background: rgba(47,87,65,0.15);
+      color: var(--accent);
+    }
+    .runway-status.inactive {
+      background: var(--line);
+      color: var(--ink-3);
+    }
+    .runway-tokens {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--ink-3);
+      min-width: 96px;
+      text-align: right;
+    }
+    .runway-bar-wrap {
+      flex: 1;
+      height: 3px;
+      background: var(--line);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .runway-bar {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 600ms var(--ease);
+    }
+    .runway-time {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      min-width: 88px;
+      text-align: right;
+    }
+    .runway-time.muted {
+      font-size: 13px;
+      color: var(--ink-3);
+      letter-spacing: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-inner">
+        <a href="/" class="brand" aria-label="Miser home">
+          <!-- Tally mark: 4 ink verticals + 1 greenback slash -->
+          <svg class="tally-mark" xmlns="http://www.w3.org/2000/svg"
+               viewBox="0 0 120 120" width="32" height="32" aria-hidden="true">
+            <g stroke-width="8" stroke-linecap="square" fill="none">
+              <line x1="28" y1="30" x2="28" y2="90" stroke="#1C1A17"/>
+              <line x1="46" y1="30" x2="46" y2="90" stroke="#1C1A17"/>
+              <line x1="64" y1="30" x2="64" y2="90" stroke="#1C1A17"/>
+              <line x1="82" y1="30" x2="82" y2="90" stroke="#1C1A17"/>
+              <line x1="20" y1="86" x2="90" y2="34" stroke="#2F5741"/>
+            </g>
+          </svg>
+          <span class="wordmark">Miser<span> ·</span></span>
+        </a>
+        <div class="header-meta">
+          <span class="refresh-notice" id="refreshNotice">—</span>
+          <span class="status-dot" id="statusDot">Connecting</span>
+          <span class="date-display" id="dateDisplay"></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <main>
+    <div class="container">
+
+      <!-- Page heading -->
+      <div class="page-heading">
+        <p class="kicker">API Spend · Today</p>
+        <h1>Every token, <em>accounted for.</em></h1>
+        <p class="page-lede">
+          Real-time attribution across all tools sharing your Anthropic key.
+          <span class="aside">Cache misses surfaced the moment they occur.</span>
+        </p>
+      </div>
+
+      <!-- Cache bust warning (shown when busts detected today) -->
+      <div class="bust-banner hidden" id="bustBanner">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M8 2L14 13H2L8 2Z" stroke="#7A3A2A" stroke-width="1.5" stroke-linejoin="round"/>
+          <line x1="8" y1="6" x2="8" y2="9" stroke="#7A3A2A" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="11.5" r="0.75" fill="#7A3A2A"/>
+        </svg>
+        <span id="bustBannerText"><strong>0 cache busts</strong> detected today.
+        A changed system prompt caused warm cache slots to be abandoned.</span>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+          <div class="stat-label">Spent today</div>
+          <div class="stat-value accent" id="statCost">—</div>
+          <div class="stat-sub" id="statCostSub">loading…</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Saved by cache</div>
+          <div class="stat-value accent" id="statSaved">—</div>
+          <div class="stat-sub" id="statSavedSub">vs. no-cache price</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cache hit rate</div>
+          <div class="stat-value" id="statCache">—</div>
+          <div class="stat-sub" id="statCacheSub">loading…</div>
+          <div class="cache-bar-wrap">
+            <div class="cache-bar-fill ok" id="statCacheBar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cache busts</div>
+          <div class="stat-value" id="statBusts">—</div>
+          <div class="stat-sub" id="statBustsSub">prompt divergences</div>
+        </div>
+      </div>
+
+      <!-- 7-day history chart -->
+      <div class="chart-panel" id="chartPanel">
+        <div class="chart-header">
+          <span class="chart-title">7-day history</span>
+          <div class="chart-meta">
+            <span class="chart-delta" id="chartDelta">—</span>
+            <div class="chart-legend" id="chartLegend"></div>
+          </div>
+        </div>
+        <div class="chart-body">
+          <div class="chart-svg-wrap" id="chartSvgWrap">
+            <div class="chart-tooltip" id="chartTooltip"></div>
+          </div>
+          <div class="chart-x-labels" id="chartXLabels"></div>
+        </div>
+      </div>
+
+      <!-- Runway extended -->
+      <div class="runway-section">
+        <div class="section-header">
+          <h2 class="section-title">Runway extended</h2>
+          <span class="section-sub">Session time added by Miser's cache savings, per tool.</span>
+        </div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Per-tool extension</span>
+            <span class="panel-count" id="runwayBurnRate">@ 320 tok/min</span>
+          </div>
+          <div class="panel-body" id="runwayList"></div>
+        </div>
+      </div>
+
+      <!-- Two-column: sources + live feed -->
+      <div class="main-grid">
+
+        <!-- Left: Sources ledger -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">By source</span>
+            <span class="panel-count" id="sourceCount">—</span>
+          </div>
+          <div class="panel-body" id="sourceList">
+            <div class="empty-state">
+              <svg class="empty-icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+                <rect x="8" y="8" width="32" height="32" rx="2"
+                      stroke="#8A8275" stroke-width="2"/>
+                <line x1="14" y1="24" x2="34" y2="24" stroke="#8A8275" stroke-width="2"/>
+                <line x1="14" y1="17" x2="34" y2="17" stroke="#8A8275" stroke-width="2"/>
+                <line x1="14" y1="31" x2="26" y2="31" stroke="#8A8275" stroke-width="2"/>
+              </svg>
+              <p class="empty-heading">No calls yet.</p>
+              <p class="empty-body">
+                Point any tool at the proxy and its spend will appear here.
+              </p>
+              <code class="empty-code">ANTHROPIC_BASE_URL=http://localhost:2080</code>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Live call feed -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Live calls</span>
+            <span class="panel-count" id="callCount">0</span>
+          </div>
+          <div class="panel-body" id="callFeed">
+            <div class="empty-state">
+              <p class="empty-heading">Waiting for calls.</p>
+              <p class="empty-body">Each API call appears here within one second of completion.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <hr class="rule">
+
+      <!-- Integration map -->
+      <div class="integration-section">
+        <div class="section-header">
+          <h2 class="section-title">Integration map</h2>
+          <span class="section-sub">What connects to Miser, and how.</span>
+        </div>
+        <div class="integration-grid" id="integrationGrid">
+
+          <!-- Wired via ANTHROPIC_BASE_URL proxy -->
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Claude Code</span>
+              <span class="int-status active" id="int-claude-code">Active</span>
+            </div>
+            <p class="int-desc">Hooks + MCP server + proxy attribution for all
+              in-session calls.</p>
+            <p class="int-method">hooks · mcp · proxy</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Cursor</span>
+              <span class="int-status inactive" id="int-cursor">Not seen</span>
+            </div>
+            <p class="int-desc">Set <code
+              style="font-family:var(--mono);font-size:10px">ANTHROPIC_BASE_URL</code>
+              in Cursor's env to route calls through the proxy.</p>
+            <p class="int-method">proxy · .mdc rules</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Windsurf</span>
+              <span class="int-status inactive" id="int-windsurf">Not seen</span>
+            </div>
+            <p class="int-desc">Add proxy base URL in Windsurf AI settings;
+              Miser adapter writes <code
+              style="font-family:var(--mono);font-size:10px">.windsurfrules</code>.</p>
+            <p class="int-method">proxy · rules file</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Continue.dev</span>
+              <span class="int-status inactive" id="int-continue">Not seen</span>
+            </div>
+            <p class="int-desc">MCP server entry in <code
+              style="font-family:var(--mono);font-size:10px">.continue/config.json</code>
+              plus proxy base URL override.</p>
+            <p class="int-method">mcp · proxy</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Simulatte</span>
+              <span class="int-status inactive" id="int-simulatte">Not seen</span>
+            </div>
+            <p class="int-desc">Pipeline agents set
+              <code style="font-family:var(--mono);font-size:10px">X-Miser-Source:
+              simulatte</code> header for explicit attribution.</p>
+            <p class="int-method">proxy · custom header</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Your apps</span>
+              <span class="int-status inactive" id="int-python-sdk">Not seen</span>
+            </div>
+            <p class="int-desc">Any Python or Node app using the Anthropic SDK.
+              Zero code changes — just set the env var.</p>
+            <p class="int-method">proxy · sdk env var</p>
+          </div>
+
+          <!-- Future / roadmap -->
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">OpenAI SDK</span>
+              <span class="int-status future">Planned</span>
+            </div>
+            <p class="int-desc">Proxy support for GPT-4o and o-series calls.
+              OpenAI key attribution per-tool.</p>
+            <p class="int-method">proxy · openai compat</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Image tools</span>
+              <span class="int-status future">Planned</span>
+            </div>
+            <p class="int-desc">DALL-E, Stable Diffusion, Midjourney API
+              cost tracking via proxy intercept or platform polling.</p>
+            <p class="int-method">proxy · api polling</p>
+          </div>
+
+          <div class="integration-card">
+            <div class="int-header">
+              <span class="int-name">Browser ext.</span>
+              <span class="int-status future">Planned</span>
+            </div>
+            <p class="int-desc">Capture ChatGPT Plus usage and Perplexity
+              calls from the browser layer.</p>
+            <p class="int-method">browser extension</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Daily receipt summary -->
+      <div style="max-width: 440px; margin-bottom: 48px;">
+        <div style="background: var(--paper-2); border: 1px solid var(--line);
+                    border-radius: var(--radius); padding: 24px 28px;
+                    font-family: var(--mono);">
+          <div class="kicker" style="margin-bottom: 16px;">Today's ledger</div>
+          <div id="receiptRows">
+            <div class="receipt-row">
+              <span>Input tokens</span>
+              <span class="amt" id="rInputTok">—</span>
+            </div>
+            <div class="receipt-row">
+              <span>Output tokens</span>
+              <span class="amt" id="rOutputTok">—</span>
+            </div>
+            <div class="receipt-row">
+              <span>Cache reads (served free)</span>
+              <span class="amt" id="rCacheRead">—</span>
+            </div>
+            <div class="receipt-row">
+              <span>Cache busts today</span>
+              <span class="amt" id="rBusts" style="color: var(--accent-2)">—</span>
+            </div>
+            <div class="receipt-row" style="margin-top: 8px; padding-top: 8px;">
+              <span style="color: var(--ink-3)">Without Miser would have cost</span>
+              <span id="rFullCost" style="color: var(--ink-2); font-family: var(--mono)">—</span>
+            </div>
+            <div class="receipt-row">
+              <span style="color: var(--accent); font-weight: 500">Saved by cache</span>
+              <span id="rSaved" style="color: var(--accent); font-family: var(--mono)">—</span>
+            </div>
+          </div>
+          <div class="receipt-total">
+            <span class="label">Spent today</span>
+            <span class="big" id="rTotal">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+      <hr class="rule">
+
+      <!-- Routing rules panel -->
+      <div class="routing-section">
+        <div class="section-header">
+          <h2 class="section-title">Routing rules</h2>
+          <span class="section-sub">Toggle rules without editing the JSON file.
+            Changes take effect on the next proxied call.</span>
+        </div>
+        <div id="routingPanel">
+          <p class="routing-empty">Loading rules…</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <span class="footer-note">
+          Miser proxy on <span style="font-weight:500;color:var(--ink-2)">
+          localhost:2080</span> &nbsp;·&nbsp; dashboard on
+          <span style="font-weight:500;color:var(--ink-2)">localhost:2081</span>
+        </span>
+        <span class="ledger-device">
+          <span class="ledger-line" aria-hidden="true"></span>
+          small numbers, taken seriously
+        </span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ── JavaScript ─────────────────────────────────────────────────────── -->
+  <script>
+    /* ── Utilities ──────────────────────────────────────────────────────── */
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+    function fmt_usd(v) {
+      if (v === null || v === undefined || isNaN(v)) return '—';
+      if (v === 0) return '$0.00';
+      if (v < 0.001) return '$' + v.toFixed(6);
+      if (v < 0.01)  return '$' + v.toFixed(5);
+      if (v < 1)     return '$' + v.toFixed(4);
+      return '$' + v.toFixed(2);
+    }
+
+    function fmt_tokens(n) {
+      if (n === null || n === undefined) return '—';
+      if (n >= 1_000_000) return (n/1_000_000).toFixed(1) + 'M';
+      if (n >= 1_000)     return (n/1_000).toFixed(1) + 'k';
+      return String(n);
+    }
+
+    function fmt_time(ts) {
+      if (!ts) return '';
+      const d = new Date(ts * 1000);
+      return d.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    }
+
+    function fmt_pct(v) {
+      if (v === null || v === undefined) return '—';
+      return v.toFixed(1) + '%';
+    }
+
+    /* ── Date header ─────────────────────────────────────────────────────── */
+    const today = new Date();
+    $('dateDisplay').textContent = today.toLocaleDateString('en-GB', {
+      weekday: 'short', day: 'numeric', month: 'short'
+    }).toUpperCase();
+
+    /* ── State ───────────────────────────────────────────────────────────── */
+    let state = {
+      total_cost_usd: 0,
+      cache_hit_pct: 0,
+      cache_busts: 0,
+      total_input_tokens: 0,
+      total_output_tokens: 0,
+      cache_read_tokens: 0,
+      sources: {},
+      recent_calls: [],
+    };
+
+    /* ── Render functions ────────────────────────────────────────────────── */
+    function renderStats(s) {
+      $('statCost').textContent   = fmt_usd(s.total_cost_usd);
+      $('statSaved').textContent  = fmt_usd(s.saved_usd);
+      $('statCache').textContent  = fmt_pct(s.cache_hit_pct);
+      $('statBusts').textContent  = s.cache_busts || '0';
+
+      // Cache hit rate progress bar
+      const _cachePct = s.cache_hit_pct || 0;
+      const _bar = $('statCacheBar');
+      _bar.style.width = Math.min(_cachePct, 100) + '%';
+      _bar.className   = 'cache-bar-fill ' +
+        (_cachePct >= 80 ? 'good' : _cachePct >= 50 ? 'ok' : 'warn');
+
+      if (s.cache_busts > 0) {
+        $('statBusts').classList.add('warn');
+      }
+
+      const callTotal = Object.values(s.sources || {}).reduce((a,b) => a + (b.calls||0), 0);
+      $('statCostSub').textContent  = callTotal + ' call' + (callTotal !== 1 ? 's' : '') + ' today';
+      const savingsPct = s.savings_pct > 0 ? ` · ${s.savings_pct.toFixed(0)}% reduction` : '';
+      $('statSavedSub').textContent = 'vs. no-cache price' + savingsPct;
+      $('statCacheSub').textContent = fmt_tokens(s.cache_read_tokens) + ' tokens served';
+      $('statSourcesSub').textContent = 'tools active today';
+
+      // Cache bust banner
+      if (s.cache_busts > 0) {
+        $('bustBanner').classList.remove('hidden');
+        $('bustBannerText').innerHTML =
+          `<strong>${s.cache_busts} cache bust${s.cache_busts > 1 ? 's' : ''}</strong>
+           detected today. A changed system prompt caused warm cache slots to be abandoned.`;
+      } else {
+        $('bustBanner').classList.add('hidden');
+      }
+
+      // Receipt
+      $('rInputTok').textContent  = fmt_tokens(s.total_input_tokens);
+      $('rOutputTok').textContent = fmt_tokens(s.total_output_tokens);
+      $('rCacheRead').textContent = fmt_tokens(s.cache_read_tokens);
+      $('rBusts').textContent     = String(s.cache_busts || 0);
+      $('rFullCost').textContent  = fmt_usd(s.full_cost_usd);
+      $('rSaved').textContent     = '+' + fmt_usd(s.saved_usd);
+      $('rTotal').textContent     = fmt_usd(s.total_cost_usd);
+    }
+
+    function renderSources(sources) {
+      const entries = Object.entries(sources || {});
+      $('sourceCount').textContent = entries.length + ' source' + (entries.length !== 1 ? 's' : '');
+
+      if (entries.length === 0) {
+        $('sourceList').innerHTML = `
+          <div class="empty-state">
+            <p class="empty-heading">No calls yet.</p>
+            <p class="empty-body">Point any tool at the proxy and its spend appears here.</p>
+            <code class="empty-code">ANTHROPIC_BASE_URL=http://localhost:2080</code>
+          </div>`;
+        return;
+      }
+
+      const maxCost = Math.max(...entries.map(([,v]) => v.cost_usd || 0), 0.0001);
+      const rows = entries
+        .sort(([,a],[,b]) => (b.cost_usd||0) - (a.cost_usd||0))
+        .map(([src, v]) => {
+          const pct = Math.max(2, ((v.cost_usd||0) / maxCost) * 100);
+          const cacheHitPct = (v.input_tokens + v.cache_read_tokens) > 0
+            ? (v.cache_read_tokens / (v.input_tokens + v.cache_read_tokens) * 100)
+            : 0;
+          return `
+            <div class="source-row">
+              <span class="source-name">${esc(src)}</span>
+              <div class="source-bar-wrap">
+                <div class="source-bar" style="width:${pct.toFixed(1)}%"></div>
+              </div>
+              <span class="source-cost">${fmt_usd(v.cost_usd)}</span>
+              <span class="source-calls">${v.calls||0} calls</span>
+              <span class="source-cache">${cacheHitPct.toFixed(0)}% hit</span>
+            </div>`;
+        }).join('');
+      $('sourceList').innerHTML = rows;
+    }
+
+    function renderCallFeed(calls) {
+      if (!calls || calls.length === 0) {
+        $('callFeed').innerHTML = `
+          <div class="empty-state">
+            <p class="empty-heading">Waiting for calls.</p>
+            <p class="empty-body">Each API call appears here within one second.</p>
+          </div>`;
+        $('callCount').textContent = '0';
+        return;
+      }
+
+      $('callCount').textContent = calls.length;
+      const rows = calls.slice(0, 40).map(c => {
+        const tagClass   = (c.source||'').replace(/[^a-z0-9-]/g, '-');
+        const hitBadge   = c.cache_hit    ? '<span class="badge badge-hit">hit</span>'  : '';
+        const bustBadge  = c.cache_busted ? '<span class="badge badge-bust">bust</span>' : '';
+        // Routing badge: shown when the model was rewritten by the router.
+        const wasRouted  = c.routed_model && c.routed_model !== c.model;
+        // routed_model holds what was requested; model holds what was actually used.
+        // (In the JSONL: model = final model, routed_model = original request)
+        const routedBadge = (c.route_rule)
+          ? `<span class="badge badge-routed" title="${esc(c.route_rule)}">→ ${esc((c.model||'').replace('claude-',''))}</span>`
+          : '';
+        // Provider badge: shown for non-Anthropic calls.
+        const providerClass = { openai: 'badge-openai', gemini: 'badge-gemini' }[c.provider] || 'badge-routed';
+        const providerBadge = (c.provider && c.provider !== 'anthropic')
+          ? `<span class="badge ${providerClass}">${esc(c.provider.toUpperCase())}</span>`
+          : '';
+        // Show displayed model: if rerouted show original, else show model.
+        const displayModel = c.route_rule
+          ? (c.routed_model||c.model||'').replace('claude-', '') + ' →'
+          : (c.model||'').replace('claude-','');
+        return `
+          <div class="call-row">
+            <span class="call-time">${fmt_time(c.ts)}</span>
+            <span class="call-tag ${tagClass}">${esc(c.source||'?')}</span>
+            <span class="call-model">${esc(displayModel)}</span>
+            <span class="call-cost">${fmt_usd(c.cost_usd)}</span>
+            <span class="call-badges">${providerBadge}${routedBadge}${hitBadge}${bustBadge}</span>
+          </div>`;
+      }).join('');
+      $('callFeed').innerHTML = rows;
+    }
+
+    function updateIntegrationStatuses(sources) {
+      const seen = new Set(Object.keys(sources || {}));
+      const intMap = {
+        'claude-code': 'int-claude-code',
+        'cursor':      'int-cursor',
+        'windsurf':    'int-windsurf',
+        'continue':    'int-continue',
+        'simulatte':   'int-simulatte',
+        'python-sdk':  'int-python-sdk',
+        'node-sdk':    'int-python-sdk',
+      };
+      for (const [src, elId] of Object.entries(intMap)) {
+        const el = $(elId);
+        if (!el) continue;
+        if (seen.has(src)) {
+          el.textContent = 'Active';
+          el.className = 'int-status active';
+        }
+      }
+    }
+
+    /* ── Runway extended ────────────────────────────────────────────────── */
+    const BURN_RATE = 320; // tokens/minute — typical session burn rate
+
+    const RUNWAY_TOOLS = [
+      { key: 'claude-code', label: 'Claude Code' },
+      { key: 'cursor',      label: 'Cursor'      },
+      { key: 'windsurf',    label: 'Windsurf'    },
+      { key: 'continue',    label: 'Continue'    },
+      { key: 'simulatte',   label: 'Simulatte'   },
+      { key: 'python-sdk',  label: 'Your apps'   },
+    ];
+
+    function fmt_duration(minutes) {
+      if (minutes < 1)  return '+<1m';
+      if (minutes < 60) return '+' + Math.round(minutes) + 'm';
+      const h = Math.floor(minutes / 60);
+      const m = Math.round(minutes % 60);
+      return `+${h}h ${m > 0 ? ' ' + m + 'm' : ''}`.trim();
+    }
+
+    function renderRunway(sources) {
+      const minutes_per_tool = RUNWAY_TOOLS.map(t => {
+        const s = sources[t.key];
+        return s ? (s.cache_read_tokens || 0) / BURN_RATE : 0;
+      });
+      const maxMinutes = Math.max(...minutes_per_tool, 1);
+
+      const rows = RUNWAY_TOOLS.map((t, i) => {
+        const s           = sources[t.key];
+        const active      = !!s;
+        const tokensSaved = s ? (s.cache_read_tokens || 0) : 0;
+        const minutes     = minutes_per_tool[i];
+        const barPct      = Math.min(100, (minutes / maxMinutes) * 100);
+        const timeText    = !active ? '—' : tokensSaved > 0 ? fmt_duration(minutes) : '+0m';
+        const timeMuted   = !active || tokensSaved === 0;
+
+        return `
+          <div class="runway-row">
+            <span class="runway-tool">${esc(t.label)}</span>
+            <span class="runway-status ${active ? 'active' : 'inactive'}">${active ? 'Active' : 'Not connected'}</span>
+            <span class="runway-tokens">${active ? fmt_tokens(tokensSaved) + ' tok saved' : '—'}</span>
+            <div class="runway-bar-wrap">
+              <div class="runway-bar" style="width:${barPct.toFixed(1)}%"></div>
+            </div>
+            <span class="runway-time${timeMuted ? ' muted' : ''}">${timeText}</span>
+          </div>`;
+      }).join('');
+
+      $('runwayList').innerHTML = rows;
+    }
+
+    function render(s) {
+      renderStats(s);
+      renderSources(s.sources);
+      renderCallFeed(s.recent_calls);
+      updateIntegrationStatuses(s.sources);
+      renderRunway(s.sources);
+    }
+
+    /* ── Append a single new call to the feed ────────────────────────────── */
+    function prependCall(ev) {
+      // Parse if it's a JSON string
+      if (typeof ev === 'string') {
+        try { ev = JSON.parse(ev); } catch { return; }
+      }
+      // Update totals
+      state.total_cost_usd = (state.total_cost_usd || 0) + (ev.cost_usd || 0);
+      state.total_input_tokens  = (state.total_input_tokens  || 0) + (ev.input_tokens  || 0);
+      state.total_output_tokens = (state.total_output_tokens || 0) + (ev.output_tokens || 0);
+      state.cache_read_tokens   = (state.cache_read_tokens   || 0) + (ev.cache_read_tokens || 0);
+      if (ev.cache_busted) state.cache_busts = (state.cache_busts || 0) + 1;
+
+      // Update sources
+      const src = ev.source || 'unknown';
+      if (!state.sources[src]) {
+        state.sources[src] = {calls:0, cost_usd:0, input_tokens:0,
+                               output_tokens:0, cache_read_tokens:0, cache_busts:0};
+      }
+      state.sources[src].calls        += 1;
+      state.sources[src].cost_usd     += ev.cost_usd || 0;
+      state.sources[src].input_tokens += ev.input_tokens || 0;
+      state.sources[src].output_tokens += ev.output_tokens || 0;
+      state.sources[src].cache_read_tokens += ev.cache_read_tokens || 0;
+      if (ev.cache_busted) state.sources[src].cache_busts += 1;
+
+      // Re-compute cache hit pct
+      const tot = state.total_input_tokens + state.cache_read_tokens;
+      state.cache_hit_pct = tot > 0 ? (state.cache_read_tokens / tot * 100) : 0;
+
+      // Prepend to call list
+      state.recent_calls = [ev, ...(state.recent_calls||[])].slice(0, 50);
+
+      render(state);
+    }
+
+    /* ── SSE connection ──────────────────────────────────────────────────── */
+    let _es = null;
+    let _retryDelay = 2000;
+
+    function connect() {
+      if (_es) { _es.close(); _es = null; }
+      $('statusDot').textContent = 'Connecting';
+      $('statusDot').className   = 'status-dot';
+
+      _es = new EventSource('/api/events');
+
+      _es.addEventListener('init', e => {
+        try {
+          state = JSON.parse(e.data);
+          render(state);
+        } catch {}
+        setLive();
+        _retryDelay = 2000;
+      });
+
+      _es.addEventListener('refresh', e => {
+        try {
+          state = JSON.parse(e.data);
+          render(state);
+        } catch {}
+        pulse();
+      });
+
+      // Default message = new live call from proxy
+      _es.onmessage = e => {
+        if (e.data && e.data !== '[DONE]') {
+          prependCall(e.data);
+          pulse();
+        }
+      };
+
+      _es.onerror = () => {
+        $('statusDot').textContent = 'Offline';
+        $('statusDot').className   = 'status-dot';
+        _es.close(); _es = null;
+        setTimeout(connect, _retryDelay);
+        _retryDelay = Math.min(_retryDelay * 1.5, 30000);
+      };
+    }
+
+    function setLive() {
+      $('statusDot').textContent = 'Live';
+      $('statusDot').className   = 'status-dot live';
+    }
+
+    function pulse() {
+      const el = $('refreshNotice');
+      el.textContent = 'Updated';
+      el.classList.add('active');
+      setTimeout(() => {
+        el.classList.remove('active');
+        el.textContent = '—';
+      }, 1500);
+    }
+
+    /* ── Fallback: poll /api/stats every 10s if SSE never connects ────────── */
+    setInterval(async () => {
+      if (_es && _es.readyState === EventSource.OPEN) return;
+      try {
+        const r = await fetch('/api/stats');
+        if (r.ok) {
+          state = await r.json();
+          render(state);
+          setLive();
+        }
+      } catch {}
+    }, 10000);
+
+    /* ── History chart ───────────────────────────────────────────────────── */
+    // Brand palette for stacked areas — first slot is accent, rest are muted.
+    const CHART_COLORS = [
+      '#2F5741',  // greenback — primary / first source
+      '#8A8275',  // ink-3
+      '#5A544A',  // ink-2
+      '#7A3A2A',  // seal
+      '#A89E90',
+      '#C4BAA8',
+    ];
+
+    function chart_short_date(iso) {
+      const d = new Date(iso + 'T00:00:00');
+      return d.toLocaleDateString('en-GB', {day:'numeric', month:'short'});
+    }
+
+    function renderHistoryChart(data) {
+      const wrap    = $('chartSvgWrap');
+      const tooltip = $('chartTooltip');
+      const legend  = $('chartLegend');
+      const xLabels = $('chartXLabels');
+
+      if (!data || !data.dates || data.dates.length === 0) return;
+
+      const dates   = data.dates;
+      const n       = dates.length;
+      const sources = Object.keys(data.sources || {});
+      const totals  = data.totals || [];
+
+      // Week-over-week delta (first half vs second half of window).
+      const mid   = Math.floor(n / 2);
+      const prev  = totals.slice(0, mid).reduce((a,b) => a+b, 0);
+      const curr  = totals.slice(mid).reduce((a,b) => a+b, 0);
+      const delta = $('chartDelta');
+      if (prev > 0) {
+        const pct = ((curr - prev) / prev * 100);
+        delta.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% vs prior period';
+        delta.className   = 'chart-delta ' + (pct > 0 ? 'up' : 'down');
+      } else {
+        delta.textContent = '';
+        delta.className   = 'chart-delta';
+      }
+
+      // Legend
+      legend.innerHTML = sources.map((src, i) => `
+        <span class="chart-legend-item">
+          <span class="chart-legend-swatch" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>
+          ${esc(src)}
+        </span>`).join('');
+
+      // X-axis labels
+      xLabels.innerHTML = dates.map((d, i) => {
+        const isToday = (i === n - 1);
+        return `<span class="chart-x-label${isToday ? ' today' : ''}">${chart_short_date(d)}</span>`;
+      }).join('');
+
+      // SVG viewBox
+      const W = 800, H = 120, padL = 4, padR = 4, padT = 8, padB = 4;
+      const plotW = W - padL - padR;
+      const plotH = H - padT - padB;
+
+      const maxTotal = Math.max(...totals, 0.00001);
+
+      // Build stacked values per column.
+      // stacks[dayIdx] = cumulative heights per source (bottom to top).
+      const stacks = dates.map((_, di) => {
+        let cum = 0;
+        return sources.map(src => {
+          const v = (data.sources[src] || [])[di] || 0;
+          cum += v;
+          return cum;
+        });
+      });
+
+      // Helpers: x position for day column centre.
+      const colW  = plotW / n;
+      const cx    = i => padL + (i + 0.5) * colW;
+      const yScale = v => padT + plotH - (v / maxTotal) * plotH;
+
+      // Build one area path per source (stacked).
+      const areaPaths = sources.map((src, si) => {
+        const topPts = dates.map((_, di) => [cx(di), yScale(stacks[di][si])]);
+        // Bottom edge: previous source cumulative (or 0 for first).
+        const botPts = si === 0
+          ? dates.map((_, di) => [cx(di), yScale(0)])
+          : dates.map((_, di) => [cx(di), yScale(stacks[di][si - 1])]);
+
+        // Smooth top curve via cubic bezier.
+        function smooth(pts) {
+          if (pts.length < 2) return `M ${pts[0][0]} ${pts[0][1]}`;
+          let d = `M ${pts[0][0]} ${pts[0][1]}`;
+          for (let k = 1; k < pts.length; k++) {
+            const [x0, y0] = pts[k - 1];
+            const [x1, y1] = pts[k];
+            const cp = colW * 0.4;
+            d += ` C ${x0 + cp} ${y0}, ${x1 - cp} ${y1}, ${x1} ${y1}`;
+          }
+          return d;
+        }
+
+        const topPath = smooth(topPts);
+        const revBot  = [...botPts].reverse();
+        // Close: go back along bottom (reversed).
+        let close = ` L ${revBot[0][0]} ${revBot[0][1]}`;
+        for (let k = 1; k < revBot.length; k++) {
+          close += ` L ${revBot[k][0]} ${revBot[k][1]}`;
+        }
+        close += ' Z';
+
+        const color = CHART_COLORS[si % CHART_COLORS.length];
+        return `<path d="${topPath}${close}"
+          fill="${color}" fill-opacity="${si === 0 ? '0.7' : '0.45'}"
+          stroke="${color}" stroke-width="1.5" stroke-opacity="${si === 0 ? '0.9' : '0.6'}"
+          stroke-linejoin="round"/>`;
+      }).join('\n');
+
+      // Invisible hit-rects for hover tooltip.
+      const hitRects = dates.map((d, di) => {
+        const dayTotals = sources.map(src => (data.sources[src]||[])[di]||0);
+        const ttLines = sources
+          .map((src, si) => dayTotals[si] > 0 ? `${src}: ${fmt_usd(dayTotals[si])}` : null)
+          .filter(Boolean);
+        ttLines.push(`total: ${fmt_usd(totals[di])}`);
+        const label = chart_short_date(d) + '\\n' + ttLines.join('\\n');
+        return `<rect x="${padL + di * colW}" y="${padT}" width="${colW}" height="${plotH}"
+          fill="transparent"
+          data-label="${esc(label.replace(/\\n/g, '|'))}"
+          data-x="${cx(di)}"
+          data-total="${totals[di]}"
+          class="chart-hit"/>`;
+      }).join('\n');
+
+      // Grid lines
+      const gridLines = [0.25, 0.5, 0.75, 1.0].map(frac => {
+        const y = padT + plotH * (1 - frac);
+        return `<line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}"
+          stroke="rgba(28,26,23,0.08)" stroke-width="0.5"/>`;
+      }).join('');
+
+      const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg"
+        role="img" aria-label="7-day spend history">
+        ${gridLines}
+        ${areaPaths}
+        ${hitRects}
+      </svg>`;
+
+      // Replace old SVG if present.
+      const existing = wrap.querySelector('svg');
+      if (existing) existing.remove();
+      wrap.insertAdjacentHTML('afterbegin', svg);
+
+      // Tooltip events.
+      wrap.querySelectorAll('.chart-hit').forEach(rect => {
+        rect.addEventListener('mouseenter', e => {
+          const lines = rect.dataset.label.split('|');
+          tooltip.innerHTML = lines.map((l,i) =>
+            i === 0 ? `<strong>${esc(l)}</strong>` : esc(l)
+          ).join('<br>');
+          tooltip.classList.add('visible');
+        });
+        rect.addEventListener('mousemove', e => {
+          const bw = wrap.getBoundingClientRect();
+          let tx = e.clientX - bw.left + 14;
+          let ty = e.clientY - bw.top  - 10;
+          // Keep within bounds.
+          if (tx + 180 > bw.width) tx = e.clientX - bw.left - 170;
+          tooltip.style.left = tx + 'px';
+          tooltip.style.top  = ty + 'px';
+        });
+        rect.addEventListener('mouseleave', () => {
+          tooltip.classList.remove('visible');
+        });
+      });
+    }
+
+    async function loadHistory() {
+      try {
+        const r = await fetch('/api/history?days=7');
+        if (!r.ok) return;
+        const data = await r.json();
+        renderHistoryChart(data);
+      } catch {}
+    }
+
+    // Load chart on init, refresh every 2 minutes.
+    loadHistory();
+    setInterval(loadHistory, 120_000);
+
+    /* ── Routing rules panel ─────────────────────────────────────────────── */
+    const RULE_TYPE_LABELS = {
+      explicit_remap:   'remap',
+      source_policy:    'source',
+      budget_threshold: 'budget',
+      time_of_day:      'time',
+      cost_cap:         'cost cap',
+    };
+
+    function renderRoutingRules(rules) {
+      const panel = $('routingPanel');
+      if (!rules || rules.length === 0) {
+        panel.innerHTML = '<p class="routing-empty">No rules defined in routing_ladder.json.</p>';
+        return;
+      }
+
+      const rows = rules.map(r => {
+        const enabled  = r.enabled !== false;
+        const typeLabel = RULE_TYPE_LABELS[r.rule] || r.rule;
+        const pattern  = r.from_model_pattern || '.*';
+        const toModel  = r.to_model || '—';
+        const provider = r.target_provider ? ` @${esc(r.target_provider)}` : '';
+        const idx      = r._index;
+        const rowCls   = enabled ? '' : ' rule-disabled';
+
+        return `<tr class="rule-row${rowCls}" data-index="${idx}">
+          <td><span class="rule-priority">${r.priority ?? '—'}</span></td>
+          <td><span class="rule-type">${esc(typeLabel)}</span></td>
+          <td><span class="rule-desc">${esc(r.description || r.rule)}</span></td>
+          <td><span class="rule-mapping">
+            <span class="pattern">${esc(pattern)}</span>
+            <span class="arrow">→</span>
+            <span class="to-model">${esc(toModel)}${esc(provider)}</span>
+          </span></td>
+          <td>
+            <label class="toggle" title="${enabled ? 'Disable rule' : 'Enable rule'}">
+              <input type="checkbox" ${enabled ? 'checked' : ''} data-index="${idx}"
+                onchange="toggleRule(${idx}, this)">
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label" id="rule-state-${idx}">${enabled ? 'on' : 'off'}</span>
+          </td>
+        </tr>`;
+      }).join('');
+
+      panel.innerHTML = `<table class="routing-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Type</th>
+            <th>Description</th>
+            <th>Mapping</th>
+            <th>Active</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    }
+
+    async function loadRoutingRules() {
+      try {
+        const r = await fetch('/api/routing-rules');
+        if (!r.ok) return;
+        const data = await r.json();
+        renderRoutingRules(data.rules || []);
+      } catch {
+        $('routingPanel').innerHTML =
+          '<p class="routing-empty">Could not load rules. Is the dashboard server running?</p>';
+      }
+    }
+
+    async function toggleRule(index, checkbox) {
+      checkbox.disabled = true;
+      const label = document.getElementById('rule-state-' + index);
+      if (label) label.textContent = '…';
+      try {
+        const r = await fetch(`/api/routing-rules/${index}/toggle`, { method: 'POST' });
+        const data = await r.json();
+        if (data.ok) {
+          renderRoutingRules(data.rules || []);
+        } else {
+          // Revert UI on failure.
+          checkbox.checked  = !checkbox.checked;
+          checkbox.disabled = false;
+          if (label) label.textContent = checkbox.checked ? 'on' : 'off';
+        }
+      } catch {
+        checkbox.checked  = !checkbox.checked;
+        checkbox.disabled = false;
+        if (label) label.textContent = checkbox.checked ? 'on' : 'off';
+      }
+    }
+
+    loadRoutingRules();
+
+    /* ── Kick off ────────────────────────────────────────────────────────── */
+    connect();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Miser — every token, accounted for.</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200;0,8..60,300;0,8..60,400;1,8..60,200;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <filter id="scratch" x="-10%" y="-10%" width="120%" height="120%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02 0.08" numOctaves="2" seed="4"/>
+      <feDisplacementMap in="SourceGraphic" scale="1.6"/>
+    </filter>
+  </defs>
+</svg>
+
+<style>
+/* ─── Tokens ─────────────────────────────── */
+:root {
+  --paper:   #f4efe4;
+  --paper-2: #ede7d6;
+  --paper-3: #e6dfc9;
+  --ink:     #14120f;
+  --ink-2:   #4e4a42;
+  --ink-3:   #8a8275;
+  --green:   #1e4a38;
+  --green-l: #2a6b50;
+  --copper:  #8c5a2b;
+  --gold:    #b08a3e;
+  --rule:    rgba(20,18,15,0.08);
+  --rule-md: rgba(20,18,15,0.13);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+/* ─── Body: Source Serif 4 throughout ─────── */
+body {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 31px,
+    rgba(20,18,15,0.035) 31px, rgba(20,18,15,0.035) 32px
+  );
+  color: var(--ink);
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 16px; line-height: 1.74; font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--green); }
+
+/* ─── Ledger Line device ─────────────────── */
+.ledger-divider {
+  width: 64px; height: 10px; margin-bottom: 20px; position: relative;
+}
+.ledger-divider::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%;
+  height: 1px; background: var(--ink-3); opacity: 0.3;
+}
+.ledger-divider::after {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+  width: 1px; background: var(--ink-3); opacity: 0.3; transform: translateX(-50%);
+}
+
+/* ─── Nav ────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  background-color: var(--paper); background-image: none;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 56px; padding: 0 52px;
+  border-bottom: 1px solid var(--rule-md);
+}
+.nav-left { display: flex; align-items: center; gap: 12px; }
+.nav-tally { opacity: 0.9; }
+.nav-logo {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 20px; letter-spacing: -0.01em; font-weight: 400; color: var(--ink);
+}
+.nav-logo .dot { color: var(--green); }
+.nav-ledger {
+  width: 28px; height: 8px; position: relative; margin-left: 4px; opacity: 0.35;
+}
+.nav-ledger::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--ink); }
+.nav-ledger::after  { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: var(--ink); transform: translateX(-50%); }
+.nav-links { display: flex; gap: 28px; }
+.nav-links a {
+  color: var(--ink-3); text-decoration: none;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.05em;
+}
+.nav-links a:hover { color: var(--ink); }
+.nav-cta {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+  background: var(--green); color: var(--paper);
+  padding: 7px 15px; border-radius: 2px; text-decoration: none;
+}
+.nav-cta:hover { background: var(--green-l); }
+@media (max-width: 680px) { .nav-links { display: none; } .nav { padding: 0 24px; } }
+
+/* ─── Hero ───────────────────────────────── */
+.hero { padding: 88px 52px 72px; text-align: center; }
+.hero-inner { max-width: 780px; margin: 0 auto; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-3); margin-bottom: 32px;
+}
+.pip {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--green); flex-shrink: 0;
+  animation: pip 2.4s ease-out infinite;
+}
+@keyframes pip {
+  0%   { box-shadow: 0 0 0 0 rgba(30,74,56,.6); }
+  70%  { box-shadow: 0 0 0 7px rgba(30,74,56,0); }
+  100% { box-shadow: 0 0 0 0 rgba(30,74,56,0); }
+}
+.hero-h1 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 200; font-size: clamp(36px, 5.5vw, 72px);
+  line-height: 1.06; letter-spacing: -0.025em;
+  color: var(--ink); margin-bottom: 22px;
+}
+.hero-h1 em { font-style: italic; color: var(--green); font-weight: 300; }
+.hero-sub {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 400; font-size: 17px; color: var(--ink-2);
+  line-height: 1.72; max-width: 50ch; margin: 0 auto;
+}
+.hero-sub em { font-style: italic; color: var(--ink); }
+.hero-ledger {
+  display: flex; align-items: center; justify-content: center;
+  margin: 28px auto 32px;
+}
+.hero-ledger-line { width: 120px; height: 1px; background: var(--ink-3); opacity: 0.22; }
+.hero-ledger-cross {
+  width: 1px; height: 16px; background: var(--ink-3); opacity: 0.35;
+  margin: 0 -0.5px; flex-shrink: 0;
+}
+.hero-cta { display: flex; align-items: center; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.btn-primary {
+  background: var(--ink); color: var(--paper);
+  padding: 11px 22px; border-radius: 2px; text-decoration: none;
+  font-family: 'JetBrains Mono', monospace; font-size: 12px; letter-spacing: 0.06em;
+}
+.btn-primary:hover { background: var(--ink-2); color: var(--paper); }
+.btn-ghost {
+  color: var(--green); text-decoration: none;
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 15px; font-style: italic;
+  border-bottom: 1px solid rgba(30,74,56,0.3); padding-bottom: 2px;
+}
+.btn-ghost:hover { border-color: var(--green); }
+
+/* ─── Live Burn Chart ────────────────────── */
+.chart-section {
+  padding: 0 52px 52px;
+  border-bottom: 1px solid var(--rule-md);
+}
+.chart-inner { max-width: 980px; margin: 0 auto; }
+.chart-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 0 14px; border-top: 1px solid var(--rule-md);
+  flex-wrap: wrap; gap: 10px;
+}
+.chart-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-3);
+}
+.chart-counters { display: flex; gap: 20px; }
+.cc { display: flex; align-items: center; gap: 8px; }
+.cc-swatch { width: 18px; height: 2px; flex-shrink: 0; }
+.cc-swatch.wo {
+  background: repeating-linear-gradient(
+    to right,
+    rgba(140,90,43,0.5) 0, rgba(140,90,43,0.5) 4px,
+    transparent 4px, transparent 8px
+  );
+}
+.cc-swatch.wm { background: var(--green); }
+.cc-k {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
+}
+.cc-v {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.cc.wo .cc-v { color: var(--copper); }
+.cc.wm .cc-v { color: var(--green-l); }
+.burn-svg { width: 100%; overflow: visible; display: block; }
+
+/* ─── Tool Attribution Strip ─────────────── */
+.tool-strip {
+  background: var(--paper-3); background-image: none;
+  border-bottom: 1px solid var(--rule-md);
+  padding: 0 52px;
+}
+.tool-inner { max-width: 980px; margin: 0 auto; }
+.tool-head {
+  display: grid;
+  grid-template-columns: 150px 1fr 140px 100px;
+  padding: 10px 0 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-3);
+  border-bottom: 1px solid var(--rule-md);
+  gap: 16px;
+}
+.tool-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 140px 100px;
+  align-items: center;
+  padding: 13px 0; border-bottom: 1px solid var(--rule);
+  gap: 16px;
+}
+.tool-row:last-child { border-bottom: none; }
+.tool-name {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; letter-spacing: 0.05em; color: var(--ink);
+}
+.tool-row.inactive .tool-name { color: var(--ink-3); }
+.tool-dot-on  { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; animation: pip 2.4s ease-out infinite; }
+.tool-dot-off { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--ink-3); flex-shrink: 0; opacity: 0.4; }
+.tool-saved {
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--green-l); letter-spacing: 0.04em;
+}
+.tool-row.inactive .tool-saved { color: var(--ink-3); }
+.tool-ext {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-weight: 500; letter-spacing: 0.04em; color: var(--green);
+}
+.tool-row.inactive .tool-ext { color: var(--ink-3); }
+.tool-cache-bar { position: relative; height: 3px; background: var(--rule-md); border-radius: 1px; overflow: hidden; }
+.tool-cache-fill { height: 100%; background: var(--green); border-radius: 1px; opacity: 0.7; }
+@media (max-width: 680px) {
+  .tool-head { display: none; }
+  .tool-row  { grid-template-columns: 1fr 1fr; }
+  .tool-cache-bar { display: none; }
+}
+@media (max-width: 520px) { .tool-strip { padding: 0 24px; } }
+
+/* ─── Token Strip ─────────────────────────── */
+.token-strip {
+  background: var(--paper-2); background-image: none;
+  border-bottom: 1px solid var(--rule-md); padding: 0 52px;
+}
+.ts-inner {
+  max-width: 980px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+}
+@media (max-width: 620px) { .ts-inner { grid-template-columns: repeat(2, 1fr); } }
+.ts-cell { padding: 20px 24px 22px; border-right: 1px solid var(--rule-md); }
+.ts-cell:first-child { padding-left: 0; }
+.ts-cell:last-child  { border-right: none; }
+.ts-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px; letter-spacing: -0.02em; line-height: 1;
+  color: var(--green); margin-bottom: 6px; font-variant-numeric: tabular-nums;
+}
+.ts-key {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+}
+
+/* ─── Sections ───────────────────────────── */
+.section {
+  max-width: 980px; margin: 0 auto;
+  padding: 72px 52px;
+  border-bottom: 1px solid var(--rule-md);
+}
+@media (max-width: 680px) { .section { padding: 52px 24px; } }
+.s-opener { margin-bottom: 24px; }
+.s-kicker {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-3);
+}
+h2 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 300; font-size: clamp(26px, 3.2vw, 40px);
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 14px 0 18px; max-width: 22ch;
+}
+h2 em { font-style: italic; color: var(--green); }
+p.body {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 15px; color: var(--ink-2); max-width: 58ch; line-height: 1.76;
+  margin: 0 0 16px;
+}
+.aside {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-style: italic; font-size: 14px; color: var(--ink-3);
+  padding-left: 16px; border-left: 1px solid var(--rule-md);
+  margin-top: 6px; max-width: 46ch;
+}
+
+/* ─── Mechanism rows ─────────────────────── */
+.mech { margin-top: 32px; }
+.mech-row {
+  display: grid; grid-template-columns: 58px 1fr 130px;
+  padding: 20px 0; border-bottom: 1px solid var(--rule);
+  gap: 24px; align-items: start;
+}
+@media (max-width: 560px) { .mech-row { grid-template-columns: 58px 1fr; } .mech-stat { display: none; } }
+.mech-type {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; padding-top: 3px;
+}
+.mech-type.route { color: var(--gold); }
+.mech-type.cache { color: var(--green-l); }
+.mech-type.trim  { color: var(--ink-3); }
+.mech-type.stop  { color: var(--copper); }
+.mech-title {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 300; font-size: 18px; line-height: 1.3; color: var(--ink); margin-bottom: 5px;
+}
+.mech-title em { font-style: italic; color: var(--green); }
+.mech-desc {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 13px; color: var(--ink-3); max-width: 52ch; line-height: 1.68;
+}
+.mech-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--green); text-align: right;
+  font-variant-numeric: tabular-nums; letter-spacing: 0.04em;
+  padding-top: 3px; line-height: 1.7;
+}
+
+/* ─── Before / After ─────────────────────── */
+.ba {
+  display: grid; grid-template-columns: 1fr 1fr;
+  margin-top: 32px; gap: 1px; background: var(--rule-md);
+  border: 1px solid var(--rule-md);
+}
+@media (max-width: 540px) { .ba { grid-template-columns: 1fr; } }
+.ba-col { background: var(--paper); padding: 28px 24px; }
+.ba-col.after { background: var(--paper-2); background-image: none; }
+.ba-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--ink-3); padding-bottom: 14px; margin-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.ba-head.good { color: var(--green-l); }
+.ba-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 9px 0; border-bottom: 1px solid var(--rule); gap: 12px;
+}
+.ba-row span:first-child {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 13px; color: var(--ink-3);
+}
+.bv { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; }
+.bv.bad  { color: var(--copper); }
+.bv.good { color: var(--green); }
+
+/* ─── Audience ───────────────────────────── */
+.aud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 32px; }
+@media (max-width: 680px) { .aud-grid { grid-template-columns: 1fr; } }
+.aud { border-top: 1px solid var(--rule-md); padding-top: 22px; position: relative; }
+.aud::before {
+  content: ''; position: absolute; top: -1px; left: 0; width: 40px; height: 1px;
+  background: var(--green); opacity: 0.5;
+}
+.aud-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--copper); margin-bottom: 12px;
+}
+.aud h3 {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-weight: 300; font-size: 21px; line-height: 1.2; margin: 0 0 10px;
+}
+.aud h3 em { font-style: italic; color: var(--green); }
+.aud p {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 14px; color: var(--ink-2); max-width: 38ch; line-height: 1.72;
+}
+.aud-data {
+  margin-top: 18px; border: 1px solid var(--rule-md);
+  background: var(--paper-2); background-image: none;
+}
+.ad-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 8px 14px; border-bottom: 1px solid var(--rule);
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  color: var(--ink-3); letter-spacing: 0.04em; gap: 12px;
+}
+.ad-row:last-child { border-bottom: none; }
+.ad-row .av { color: var(--green); }
+.ad-row .av.bad { color: var(--copper); }
+
+/* ─── Footer ─────────────────────────────── */
+.footer {
+  max-width: 980px; margin: 0 auto;
+  padding: 48px 52px 60px;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  border-top: 1px solid var(--rule-md); gap: 24px;
+}
+@media (max-width: 560px) { .footer { flex-direction: column; padding: 36px 24px 48px; } }
+.footer-stamp {
+  font-family: 'Source Serif 4', Georgia, serif;
+  font-size: 40px; color: var(--ink); letter-spacing: -0.015em; line-height: 1;
+}
+.footer-stamp .dot { color: var(--green); }
+.footer-device { display: flex; flex-direction: column; gap: 6px; }
+.footer-ledger { width: 52px; height: 10px; position: relative; }
+.footer-ledger::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
+  background: var(--ink-3); opacity: 0.3;
+}
+.footer-ledger::after {
+  content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 1px;
+  background: var(--ink-3); opacity: 0.3; transform: translateX(-50%);
+}
+.footer-fine {
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--ink-3); font-size: 10px; letter-spacing: 0.05em; line-height: 2;
+}
+
+/* ─── Toast ──────────────────────────────── */
+.toast-zone {
+  position: fixed; bottom: 20px; right: 20px; z-index: 100;
+  display: flex; flex-direction: column-reverse; gap: 6px; pointer-events: none;
+}
+.toast {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink); color: var(--paper);
+  padding: 8px 12px 8px 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.04em;
+  box-shadow: 0 4px 16px rgba(20,18,15,0.18);
+  border-left: 2px solid var(--green);
+  animation: t-in .2s ease-out both, t-out .25s ease-in 4s both;
+  max-width: 280px;
+}
+.toast .td { color: rgba(244,239,228,0.5); flex: 1; }
+.toast .ta { color: var(--green-l); white-space: nowrap; padding-left: 10px; }
+
+@keyframes t-in  { from { opacity: 0; transform: translateX(10px); } }
+@keyframes t-out { to   { opacity: 0; transform: translateX(8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pip, .tool-dot-on { animation: none; }
+  .toast { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="toast-zone" id="tz" aria-live="polite"></div>
+
+<!-- ── Nav ──────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-left">
+    <svg class="nav-tally" width="20" height="20" viewBox="0 0 120 120">
+      <g filter="url(#scratch)" stroke-linecap="round" fill="none">
+        <path d="M28.2 30.5 Q28 60 28.4 89.7"  stroke="#14120f" stroke-width="7.5"/>
+        <path d="M46.1 29.2 Q46.5 60 45.9 90.6" stroke="#14120f" stroke-width="7.8"/>
+        <path d="M64.3 30.8 Q63.9 60 64.5 89.2" stroke="#14120f" stroke-width="7.3"/>
+        <path d="M82 28.9 Q82.4 60 81.8 90.9"   stroke="#14120f" stroke-width="7.9"/>
+        <path d="M19.4 87.2 Q54 60 91.1 33.1"   stroke="#1e4a38" stroke-width="7.6"/>
+      </g>
+    </svg>
+    <span class="nav-logo">Miser<span class="dot">.</span></span>
+    <div class="nav-ledger" aria-hidden="true"></div>
+  </div>
+  <div class="nav-links">
+    <a href="#">Product</a>
+    <a href="#">Pricing</a>
+    <a href="#">Docs</a>
+    <a href="http://localhost:2081/">Dashboard</a>
+  </div>
+  <a href="#" class="nav-cta">Install free →</a>
+</nav>
+
+<!-- ── Hero ─────────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-inner">
+
+    <div class="hero-eyebrow">
+      <span class="pip" aria-hidden="true"></span>
+      Token optimisation for AI coding agents · running now
+    </div>
+
+    <h1 class="hero-h1">
+      Your agent has <em>expensive taste.</em><br>
+      Miser corrects it, quietly.
+    </h1>
+
+    <p class="hero-sub">
+      Every token your agent spends is accounted for.
+      Miser routes, caches, trims and stops — so your subscription
+      goes further. <em>You don't hit the wall.</em>
+    </p>
+
+    <div class="hero-ledger" aria-hidden="true">
+      <div class="hero-ledger-line"></div>
+      <div class="hero-ledger-cross"></div>
+      <div class="hero-ledger-line"></div>
+    </div>
+
+    <div class="hero-cta">
+      <a href="#" class="btn-primary">Install Miser</a>
+      <a href="#how" class="btn-ghost">See how it works →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── Live Burn Chart ──────────────────────────── -->
+<div class="chart-section">
+  <div class="chart-inner">
+    <div class="chart-head">
+      <span class="chart-kicker">Token budget · live session</span>
+      <div class="chart-counters">
+        <div class="cc wo">
+          <div class="cc-swatch wo"></div>
+          <span class="cc-k">Without Miser</span>
+          <span class="cc-v" id="cnt-wo">0.0k</span>
+        </div>
+        <div class="cc wm">
+          <div class="cc-swatch wm"></div>
+          <span class="cc-k">With Miser</span>
+          <span class="cc-v" id="cnt-wm">0.0k</span>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      Chart geometry:
+        x: 44 (left axis) → 880 (right edge), width=836
+        y: 20 (LIMIT / 100%) → 158 (empty / 0%), height=138
+    -->
+    <svg class="burn-svg" viewBox="0 0 880 188"
+      aria-label="Live token burn chart showing Miser extending session">
+      <defs>
+        <linearGradient id="wm-fill-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1e4a38" stop-opacity="0.10"/>
+          <stop offset="100%" stop-color="#1e4a38" stop-opacity="0.02"/>
+        </linearGradient>
+        <linearGradient id="gap-fill-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1e4a38" stop-opacity="0.07"/>
+          <stop offset="100%" stop-color="#1e4a38" stop-opacity="0.00"/>
+        </linearGradient>
+        <clipPath id="chart-clip"><rect x="44" y="0" width="836" height="160"/></clipPath>
+      </defs>
+
+      <!-- Limit band -->
+      <rect x="44" y="0" width="836" height="20" fill="rgba(140,90,43,0.055)"/>
+      <line x1="44" y1="20" x2="880" y2="20"
+        stroke="var(--copper)" stroke-width="1" stroke-dasharray="4 4" opacity="0.25"/>
+      <text x="50" y="14" font-family="JetBrains Mono,monospace" font-size="8"
+        fill="rgba(140,90,43,0.5)" letter-spacing="0.12em">LIMIT · 100k</text>
+
+      <!-- Grid lines -->
+      <line x1="44" y1="20"  x2="880" y2="20"  stroke="rgba(20,18,15,0.06)"/>
+      <line x1="44" y1="89"  x2="880" y2="89"  stroke="rgba(20,18,15,0.06)"/>
+      <line x1="44" y1="158" x2="880" y2="158" stroke="rgba(20,18,15,0.06)"/>
+
+      <!-- Y axis labels -->
+      <text x="36" y="24"  font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(20,18,15,0.28)" text-anchor="end">100%</text>
+      <text x="36" y="93"  font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(20,18,15,0.28)" text-anchor="end"> 50%</text>
+      <text x="36" y="162" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(20,18,15,0.28)" text-anchor="end">  0%</text>
+
+      <!-- X axis labels -->
+      <text x="44"  y="176" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(20,18,15,0.3)" text-anchor="middle">start</text>
+      <text x="880" y="176" font-family="JetBrains Mono,monospace" font-size="8" fill="rgba(20,18,15,0.3)" text-anchor="middle">now</text>
+
+      <!-- Gap fill (between lines, up to limit) — dynamic -->
+      <path id="gap-fill" clip-path="url(#chart-clip)"
+        fill="url(#gap-fill-g)" d=""/>
+
+      <!-- Under-miser fill — dynamic -->
+      <path id="wm-fill" clip-path="url(#chart-clip)"
+        fill="url(#wm-fill-g)" d=""/>
+
+      <!-- Without Miser line — dashed copper, grows until limit -->
+      <polyline id="line-wo" clip-path="url(#chart-clip)"
+        fill="none" stroke="rgba(140,90,43,0.4)" stroke-width="1.5"
+        stroke-dasharray="5 4" points="44,158"/>
+
+      <!-- Limit hit group — hidden until triggered -->
+      <g id="limit-hit" opacity="0" style="transition:opacity .4s">
+        <line id="lim-vl" x1="524" y1="20" x2="524" y2="158"
+          stroke="rgba(140,90,43,0.2)" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle id="lim-dot" cx="524" cy="20" r="3.5" fill="var(--copper)" opacity="0.65"/>
+        <text id="lim-lbl" x="530" y="16" font-family="JetBrains Mono,monospace"
+          font-size="8" fill="rgba(140,90,43,0.7)" letter-spacing="0.08em">limit reached</text>
+        <text id="sess-over" x="700" y="90" font-family="JetBrains Mono,monospace"
+          font-size="9" fill="rgba(20,18,15,0.07)" text-anchor="middle"
+          letter-spacing="0.14em">SESSION OVER</text>
+      </g>
+
+      <!-- With Miser line — solid green, animated -->
+      <polyline id="line-wm" clip-path="url(#chart-clip)"
+        fill="none" stroke="var(--green)" stroke-width="2"
+        stroke-linecap="round" points="44,158"/>
+
+      <!-- Live dot at tip of With Miser line -->
+      <circle id="miser-dot" cx="44" cy="158" r="3.5" fill="var(--green)" opacity="0"/>
+      <text id="miser-lbl" x="44" y="150" font-family="JetBrains Mono,monospace"
+        font-size="8" fill="rgba(30,74,56,0.8)" text-anchor="end" opacity="0"/>
+    </svg>
+
+  </div>
+</div>
+
+<!-- ── Tool Attribution Strip ───────────────────── -->
+<div class="tool-strip" role="status" aria-label="Tool attribution and runway">
+  <div class="tool-inner">
+    <div class="tool-head">
+      <span>Tool</span>
+      <span>Tokens saved today</span>
+      <span>Runway extended</span>
+      <span>Cache hit rate</span>
+    </div>
+    <div class="tool-row">
+      <div class="tool-name"><span class="tool-dot-on"></span>Claude Code</div>
+      <div class="tool-saved" id="tt-tok">48,312 tokens</div>
+      <div class="tool-ext" id="tt-ext">+2h 14m</div>
+      <div class="tool-cache-bar"><div class="tool-cache-fill" id="tt-bar" style="width:83%"></div></div>
+    </div>
+    <div class="tool-row inactive">
+      <div class="tool-name"><span class="tool-dot-off"></span>Cursor</div>
+      <div class="tool-saved">—</div>
+      <div class="tool-ext">Not connected</div>
+      <div class="tool-cache-bar"></div>
+    </div>
+    <div class="tool-row inactive">
+      <div class="tool-name"><span class="tool-dot-off"></span>Windsurf</div>
+      <div class="tool-saved">—</div>
+      <div class="tool-ext">Not connected</div>
+      <div class="tool-cache-bar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Token Strip ───────────────────────────────── -->
+<div class="token-strip" role="status" aria-label="Live session metrics">
+  <div class="ts-inner">
+    <div class="ts-cell">
+      <div class="ts-val"><span id="ts-tok">48.3</span>k</div>
+      <div class="ts-key">tokens saved today</div>
+    </div>
+    <div class="ts-cell">
+      <div class="ts-val"><span id="ts-exth">2</span>h <span id="ts-extm">14</span>m</div>
+      <div class="ts-key">subscription runway extended</div>
+    </div>
+    <div class="ts-cell">
+      <div class="ts-val" style="color:var(--ink-3)">0</div>
+      <div class="ts-key">top-ups this month</div>
+    </div>
+    <div class="ts-cell">
+      <div class="ts-val"><span id="ts-cache">83</span>%</div>
+      <div class="ts-key">cache hit rate</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── How it works ───────────────────────────────── -->
+<div id="how">
+<div class="section">
+  <div class="s-opener">
+    <div class="ledger-divider" aria-hidden="true"></div>
+    <div class="s-kicker">How it extends your session</div>
+  </div>
+  <h2>Four ways Miser <em>saves tokens.</em></h2>
+  <p class="body">Every call your agent makes is a decision about tokens. Miser makes those decisions better — smaller model where quality holds, cached response where nothing changed, trimmed context before it gets expensive, stopped loop before it compounds.</p>
+
+  <div class="mech">
+    <div class="mech-row">
+      <span class="mech-type route">Route</span>
+      <div>
+        <div class="mech-title">Smallest model that <em>finishes the job.</em></div>
+        <div class="mech-desc">Most tasks don't need Opus. A grep, a lint fix, a one-line edit — routed to Haiku via the routing rules, same output, a fraction of the tokens.</div>
+      </div>
+      <div class="mech-stat">avg −73% tokens<br>per routed call</div>
+    </div>
+    <div class="mech-row">
+      <span class="mech-type cache">Cache</span>
+      <div>
+        <div class="mech-title">Pay for a thought <em>once.</em></div>
+        <div class="mech-desc">System prompts, tool schemas, repeated reads — if the input hasn't changed, the tokens don't go again. Cache busts are surfaced the moment they occur.</div>
+      </div>
+      <div class="mech-stat">83% cache hits<br>this session</div>
+    </div>
+    <div class="mech-row">
+      <span class="mech-type trim">Trim</span>
+      <div>
+        <div class="mech-title">Context stripped to <em>what earns its place.</em></div>
+        <div class="mech-desc">History accretes fast. Dead tool results, resolved reasoning, old file content — pruned before every call.</div>
+      </div>
+      <div class="mech-stat">avg −3,200 tokens<br>per call</div>
+    </div>
+    <div class="mech-row">
+      <span class="mech-type stop">Stop</span>
+      <div>
+        <div class="mech-title">Loops caught <em>before they compound.</em></div>
+        <div class="mech-desc">An agent that retries six times costs six times as much. Miser detects the loop on iteration two, stops quietly, reports what happened.</div>
+      </div>
+      <div class="mech-stat">avg −4.3 wasted<br>calls per loop</div>
+    </div>
+  </div>
+  <p class="aside">Nothing surprising. That's the point.</p>
+</div>
+</div>
+
+<!-- ── Before / After ────────────────────────────── -->
+<div class="section">
+  <div class="s-opener">
+    <div class="ledger-divider" aria-hidden="true"></div>
+    <div class="s-kicker">Today's ledger</div>
+  </div>
+  <h2>Same subscription. <em>More month.</em></h2>
+  <p class="body">On a fixed-usage plan — Claude Max, Cursor, any capped model — hitting the limit mid-afternoon is a tax on productivity. Miser moves the wall.</p>
+
+  <div class="ba" role="table">
+    <div class="ba-col">
+      <div class="ba-head">Without Miser</div>
+      <div class="ba-row"><span>Subscription limit hit</span><span class="bv bad">Day 19</span></div>
+      <div class="ba-row"><span>Session ended today</span><span class="bv bad">14:31</span></div>
+      <div class="ba-row"><span>Top-up required</span><span class="bv bad">Yes</span></div>
+      <div class="ba-row"><span>Tokens remaining at 5pm</span><span class="bv bad">0%</span></div>
+    </div>
+    <div class="ba-col after">
+      <div class="ba-head good">With Miser</div>
+      <div class="ba-row"><span>Subscription limit hit</span><span class="bv good">Day 31</span></div>
+      <div class="ba-row"><span>Session ended today</span><span class="bv good">Still running</span></div>
+      <div class="ba-row"><span>Top-up required</span><span class="bv good">No</span></div>
+      <div class="ba-row"><span>Tokens remaining at 5pm</span><span class="bv good">47%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Audience ──────────────────────────────────── -->
+<div class="section">
+  <div class="s-opener">
+    <div class="ledger-divider" aria-hidden="true"></div>
+    <div class="s-kicker">Two builders, one engine</div>
+  </div>
+  <h2>Solo builder. <em>Engineering team.</em></h2>
+  <p class="body">The mechanism is the same. The ledger looks different.</p>
+
+  <div class="aud-grid">
+    <div class="aud">
+      <div class="aud-badge">Miser · solo builder</div>
+      <h3>Code all day. <em>Don't top up.</em></h3>
+      <p>Miser runs underneath your session — you don't configure it, you don't watch it. You notice it when the limit you used to hit at 2pm doesn't arrive.</p>
+      <div class="aud-data">
+        <div class="ad-row"><span>Session start</span><span class="av">09:12</span></div>
+        <div class="ad-row"><span>Would have ended</span><span class="av bad">14:31</span></div>
+        <div class="ad-row"><span>Still running at</span><span class="av">17:00+</span></div>
+        <div class="ad-row"><span>Runway extended</span><span class="av">+2h 29m</span></div>
+      </div>
+    </div>
+    <div class="aud">
+      <div class="aud-badge">Tokenmiser · engineering team</div>
+      <h3>Team budget. <em>Held.</em></h3>
+      <p>Four engineers, one API budget. Miser watches each session, routes by model, flags outliers. The team ships more. The bill stays under the line.</p>
+      <div class="aud-data">
+        <div class="ad-row"><span>Monthly API budget</span><span class="av">$400</span></div>
+        <div class="ad-row"><span>Projected without Miser</span><span class="av bad">$631</span></div>
+        <div class="ad-row"><span>Actual with Miser</span><span class="av">$389</span></div>
+        <div class="ad-row"><span>Tokens saved</span><span class="av">1.4M this month</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ────────────────────────────────────── -->
+<footer class="footer">
+  <div class="footer-stamp">Miser<span class="dot">.</span></div>
+  <div class="footer-device">
+    <div class="footer-ledger" aria-hidden="true"></div>
+    <div class="footer-fine">
+      Every token, accounted for.<br>
+      Vol. 1 · Private beta · © 2026
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ─── Chart geometry ─────────────────────────── */
+  const X0   = 44, X1 = 880, CW = 836;
+  const YTOP = 20, YBOT = 158, CH = 138;   // CH = YBOT - YTOP
+  const BUDGET   = 100000;                  // token budget
+  const TICKS    = 100;                     // animation ticks per cycle
+  const LIM_TICK = 55;                      // "Without Miser" hits limit here
+  const TICK_MS  = 72;                      // ms between ticks (~7s per cycle)
+
+  function xAt(t)   { return X0 + (t / TICKS) * CW; }
+  function yAt(pct) { return YBOT - pct * CH; }        // pct: 0–1
+  function woUsage(t) { return Math.min(t / LIM_TICK, 1); }
+  function wmUsage(t) { return Math.min((t / TICKS) * 0.47, 0.47); }
+  function ptsStr(arr) {
+    return arr.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  }
+  function fmtK(n) { return (Math.round(n / 100) / 10).toFixed(1) + 'k'; }
+
+  /* ─── DOM refs ───────────────────────────────── */
+  const lineWo   = document.getElementById('line-wo');
+  const lineWm   = document.getElementById('line-wm');
+  const wmFill   = document.getElementById('wm-fill');
+  const gapFill  = document.getElementById('gap-fill');
+  const limHit   = document.getElementById('limit-hit');
+  const limVl    = document.getElementById('lim-vl');
+  const limDot   = document.getElementById('lim-dot');
+  const limLbl   = document.getElementById('lim-lbl');
+  const sessOver = document.getElementById('sess-over');
+  const miserDot = document.getElementById('miser-dot');
+  const miserLbl = document.getElementById('miser-lbl');
+  const cntWo    = document.getElementById('cnt-wo');
+  const cntWm    = document.getElementById('cnt-wm');
+
+  /* ─── Chart state ────────────────────────────── */
+  let tick         = 0;
+  let woPoints     = [[X0, YBOT]];
+  let wmPoints     = [[X0, YBOT]];
+  let limitReached = false;
+  let timer        = null;
+
+  /* ─── Build area-fill paths ──────────────────── */
+  function buildWmFillPath(wmP, t) {
+    if (wmP.length < 2) return '';
+    const lastX = xAt(t).toFixed(1);
+    const fwd = wmP.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L ');
+    return 'M ' + X0 + ',' + YBOT + ' L ' + fwd + ' L ' + lastX + ',' + YBOT + ' Z';
+  }
+
+  function buildGapPath(woP, wmP, limT, curT) {
+    const end = Math.min(curT, limT);
+    if (end < 2) return '';
+    // take points up to the limit tick from each line
+    const woSlice = woP.slice(0, end + 1);
+    const wmSlice = wmP.slice(0, end + 1);
+    if (woSlice.length < 2 || wmSlice.length < 2) return '';
+    const fwd = wmSlice.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L ');
+    const bwd = [...woSlice].reverse().map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L ');
+    return 'M ' + fwd + ' L ' + bwd + ' Z';
+  }
+
+  /* ─── Animate one tick ───────────────────────── */
+  function step() {
+    tick++;
+
+    const x   = xAt(tick);
+    const woU = woUsage(tick);
+    const wmU = wmUsage(tick);
+
+    // "With Miser" always grows
+    wmPoints.push([x, yAt(wmU)]);
+    lineWm.setAttribute('points', ptsStr(wmPoints));
+    wmFill.setAttribute('d', buildWmFillPath(wmPoints, tick));
+    gapFill.setAttribute('d', buildGapPath(woPoints, wmPoints, LIM_TICK, tick));
+
+    // "Without Miser" grows until limit
+    if (!limitReached) {
+      woPoints.push([x, yAt(woU)]);
+      lineWo.setAttribute('points', ptsStr(woPoints));
+
+      if (tick >= LIM_TICK) {
+        limitReached = true;
+        const lx = xAt(LIM_TICK);
+        const ly = YTOP;
+        limVl.setAttribute('x1', lx.toFixed(1));  limVl.setAttribute('x2', lx.toFixed(1));
+        limVl.setAttribute('y1', ly);              limVl.setAttribute('y2', YBOT);
+        limDot.setAttribute('cx', lx.toFixed(1));  limDot.setAttribute('cy', ly);
+        limLbl.setAttribute('x', (lx + 6).toFixed(1)); limLbl.setAttribute('y', ly + 13);
+        // "session over" label centred in the dead zone
+        const midX = ((lx + X1) / 2).toFixed(1);
+        sessOver.setAttribute('x', midX); sessOver.setAttribute('y', ((YTOP + YBOT) / 2 + 4).toFixed(1));
+        limHit.style.opacity = '1';
+      }
+    }
+
+    // Live dot + label on "With Miser" tip
+    miserDot.setAttribute('cx', x.toFixed(1));
+    miserDot.setAttribute('cy', yAt(wmU).toFixed(1));
+    miserDot.setAttribute('opacity', tick > 5 ? '1' : '0');
+
+    const pctLeft = Math.round((1 - wmU) * 100);
+    miserLbl.setAttribute('x', (x - 6).toFixed(1));
+    miserLbl.setAttribute('y', (yAt(wmU) - 7).toFixed(1));
+    miserLbl.textContent = pctLeft + '% remaining';
+    miserLbl.setAttribute('opacity', tick > 10 ? '0.85' : '0');
+
+    // Counters
+    cntWo.textContent = fmtK(woUsage(Math.min(tick, LIM_TICK)) * BUDGET);
+    cntWm.textContent = fmtK(wmU * BUDGET);
+
+    if (tick >= TICKS) {
+      clearInterval(timer);
+      setTimeout(resetChart, 2200);
+    }
+  }
+
+  /* ─── Reset and replay ───────────────────────── */
+  function resetChart() {
+    tick         = 0;
+    woPoints     = [[X0, YBOT]];
+    wmPoints     = [[X0, YBOT]];
+    limitReached = false;
+
+    lineWo.setAttribute('points', ptsStr(woPoints));
+    lineWm.setAttribute('points', ptsStr(wmPoints));
+    wmFill.setAttribute('d', '');
+    gapFill.setAttribute('d', '');
+    limHit.style.opacity = '0';
+    miserDot.setAttribute('opacity', '0');
+    miserLbl.setAttribute('opacity', '0');
+    cntWo.textContent = '0.0k';
+    cntWm.textContent = '0.0k';
+
+    timer = setInterval(step, TICK_MS);
+  }
+
+  /* ─── Reduced-motion: draw static final state ── */
+  function drawStatic() {
+    for (let t = 0; t <= TICKS; t++) {
+      const x  = xAt(t);
+      wmPoints.push([x, yAt(wmUsage(t))]);
+      if (t <= LIM_TICK) woPoints.push([x, yAt(woUsage(t))]);
+    }
+    lineWo.setAttribute('points', ptsStr(woPoints));
+    lineWm.setAttribute('points', ptsStr(wmPoints));
+    wmFill.setAttribute('d', buildWmFillPath(wmPoints, TICKS));
+    gapFill.setAttribute('d', buildGapPath(woPoints, wmPoints, LIM_TICK, TICKS));
+
+    const lx = xAt(LIM_TICK);
+    limVl.setAttribute('x1', lx); limVl.setAttribute('x2', lx);
+    limVl.setAttribute('y1', YTOP); limVl.setAttribute('y2', YBOT);
+    limDot.setAttribute('cx', lx); limDot.setAttribute('cy', YTOP);
+    limLbl.setAttribute('x', lx + 6); limLbl.setAttribute('y', YTOP + 13);
+    sessOver.setAttribute('x', ((lx + X1) / 2).toFixed(1));
+    sessOver.setAttribute('y', ((YTOP + YBOT) / 2 + 4).toFixed(1));
+    limHit.style.opacity = '1';
+
+    const finalX = xAt(TICKS), finalWmU = wmUsage(TICKS);
+    miserDot.setAttribute('cx', finalX); miserDot.setAttribute('cy', yAt(finalWmU));
+    miserDot.setAttribute('opacity', '1');
+    miserLbl.setAttribute('x', finalX - 6); miserLbl.setAttribute('y', yAt(finalWmU) - 7);
+    miserLbl.textContent = Math.round((1 - finalWmU) * 100) + '% remaining';
+    miserLbl.setAttribute('opacity', '0.85');
+    cntWo.textContent = '100.0k';
+    cntWm.textContent = fmtK(finalWmU * BUDGET);
+  }
+
+  if (rm) { drawStatic(); } else { timer = setInterval(step, TICK_MS); }
+
+  /* ─── Token strip + tool strip live engine ────── */
+  const pool = [
+    { type:'route', desc:'opus → haiku · edit task',   tok: 14200 },
+    { type:'route', desc:'sonnet → haiku · grep',      tok:  9800 },
+    { type:'route', desc:'opus → sonnet · summarise',  tok: 18400 },
+    { type:'cache', desc:'system prompt hit',          tok:  4100 },
+    { type:'cache', desc:'file read · cached',         tok:  2200 },
+    { type:'trim',  desc:'context −3,400 tokens',      tok:  3400 },
+    { type:'trim',  desc:'history pruned',             tok:  2100 },
+    { type:'stop',  desc:'loop caught · 4 iterations', tok: 38000 },
+    { type:'stop',  desc:'redundant call blocked',     tok: 11200 },
+    { type:'dedup', desc:'identical prompt deduped',   tok:  6400 },
+  ];
+  const labels = { route:'routed', cache:'cached', trim:'trimmed', stop:'loop stopped', dedup:'deduped' };
+
+  let tokSaved = 48312, extH = 2, extM = 14, cRate = 83;
+
+  function fmtKraw(n) { return (Math.round(n / 100) / 10).toFixed(1); }
+
+  function updStrip() {
+    document.getElementById('ts-tok').textContent  = fmtKraw(tokSaved);
+    document.getElementById('ts-exth').textContent = extH;
+    document.getElementById('ts-extm').textContent = String(extM).padStart(2, '0');
+    document.getElementById('ts-cache').textContent = Math.round(cRate);
+    // tool strip
+    document.getElementById('tt-tok').textContent = tokSaved.toLocaleString() + ' tokens';
+    document.getElementById('tt-ext').textContent = '+' + extH + 'h ' + String(extM).padStart(2,'0') + 'm';
+    document.getElementById('tt-bar').style.width = Math.round(cRate) + '%';
+  }
+
+  function addEvent(ev) {
+    tokSaved += ev.tok;
+    const secs = Math.round(ev.tok / 320);
+    extM += Math.floor(secs / 60);
+    if (extM >= 60) { extH++; extM -= 60; }
+    cRate = Math.max(79, Math.min(89, cRate + (Math.random() - 0.48) * 0.3));
+    updStrip();
+  }
+
+  function toast(ev) {
+    const z = document.getElementById('tz');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="td">' + labels[ev.type] + ' · ' + ev.desc + '</span>'
+                + '<span class="ta">−' + (Math.round(ev.tok / 100) / 10).toFixed(1) + 'k tok</span>';
+    z.appendChild(t);
+    setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
+  }
+
+  if (!rm) {
+    (function fire() {
+      const ev = pool[Math.floor(Math.random() * pool.length)];
+      addEvent(ev);
+      if (ev.tok >= 2000) toast(ev);
+      setTimeout(fire, 1800 + Math.random() * 3200);
+    })();
+  }
+
+})();
+</script>
+</body>
+</html>
