@@ -1,0 +1,194 @@
+/* ============================================================
+   Miser — Design Tokens
+   Canonical CSS custom properties. Import into any Miser-branded
+   web artefact. Do not override; extend.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* ---------- Colour ---------- */
+  --miser-paper:     #F3EDE1;
+  --miser-paper-2:   #EBE4D4;
+  --miser-ink:       #1C1A17;
+  --miser-ink-2:     #5A544A;
+  --miser-ink-3:     #8A8275;
+  --miser-accent:    #2F5741;   /* greenback — the only accent */
+  --miser-accent-2:  #7A3A2A;   /* seal — warnings only, never decorative */
+  --miser-line:      rgba(28, 26, 23, 0.14);
+
+  /* ---------- Typography ---------- */
+  --miser-serif:     'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --miser-sans:      'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --miser-mono:      'JetBrains Mono', 'SF Mono', Menlo, monospace;
+
+  /* Type scale */
+  --miser-display:   64px;
+  --miser-h1:        48px;
+  --miser-h2:        36px;
+  --miser-h3:        24px;
+  --miser-lede:      22px;
+  --miser-body:      17px;
+  --miser-small:     14px;
+  --miser-kicker:    12px;
+  --miser-micro:     11px;
+
+  /* Line heights */
+  --miser-lh-display: 1.02;
+  --miser-lh-heading: 1.1;
+  --miser-lh-lede:    1.55;
+  --miser-lh-body:    1.6;
+  --miser-lh-ui:      1.5;
+
+  /* Letter spacing */
+  --miser-tracking-display: -0.02em;
+  --miser-tracking-heading: -0.015em;
+  --miser-tracking-kicker:  0.1em;
+
+  /* ---------- Layout ---------- */
+  --miser-readable-width: 58ch;
+  --miser-container:      1100px;
+  --miser-radius:         4px;
+  --miser-radius-sm:      2px;
+
+  /* ---------- Motion ---------- */
+  --miser-ease:           cubic-bezier(0.4, 0, 0.2, 1);
+  --miser-ease-out:       cubic-bezier(0, 0, 0.2, 1);
+  --miser-duration-ui:    200ms;
+  --miser-duration-content: 500ms;
+}
+
+/* ============================================================
+   Base typography — apply to body/root of any Miser page
+   ============================================================ */
+.miser-base {
+  background: var(--miser-paper);
+  color: var(--miser-ink);
+  font-family: var(--miser-sans);
+  font-size: var(--miser-body);
+  line-height: var(--miser-lh-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.miser-display {
+  font-family: var(--miser-serif);
+  font-weight: 400;
+  font-size: var(--miser-display);
+  line-height: var(--miser-lh-display);
+  letter-spacing: var(--miser-tracking-display);
+}
+
+.miser-display em,
+.miser-h1 em,
+.miser-h2 em {
+  font-style: italic;
+  color: var(--miser-accent);
+  font-weight: 400;
+}
+
+.miser-h1 { font-family: var(--miser-serif); font-weight: 400; font-size: var(--miser-h1); line-height: var(--miser-lh-heading); letter-spacing: var(--miser-tracking-heading); }
+.miser-h2 { font-family: var(--miser-serif); font-weight: 400; font-size: var(--miser-h2); line-height: var(--miser-lh-heading); letter-spacing: var(--miser-tracking-heading); }
+.miser-h3 { font-family: var(--miser-serif); font-weight: 400; font-size: var(--miser-h3); line-height: 1.2; }
+
+.miser-lede {
+  font-family: var(--miser-serif);
+  font-size: var(--miser-lede);
+  line-height: var(--miser-lh-lede);
+  max-width: var(--miser-readable-width);
+}
+.miser-lede .aside {
+  color: var(--miser-ink-3);
+  font-style: italic;
+}
+
+.miser-body {
+  font-family: var(--miser-sans);
+  font-size: var(--miser-body);
+  line-height: var(--miser-lh-body);
+  color: var(--miser-ink);
+  max-width: var(--miser-readable-width);
+}
+
+.miser-kicker,
+.miser-micro {
+  font-family: var(--miser-mono);
+  font-size: var(--miser-kicker);
+  letter-spacing: var(--miser-tracking-kicker);
+  text-transform: uppercase;
+  color: var(--miser-ink-3);
+}
+
+.miser-mono-num {
+  font-family: var(--miser-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dividers */
+.miser-rule {
+  border: none;
+  border-top: 1px solid var(--miser-line);
+  margin: 32px 0;
+}
+
+/* CTA button */
+.miser-btn {
+  background: var(--miser-ink);
+  color: var(--miser-paper);
+  padding: 12px 22px;
+  border-radius: var(--miser-radius-sm);
+  font-family: var(--miser-sans);
+  font-weight: 500;
+  font-size: 15px;
+  text-decoration: none;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  transition: opacity var(--miser-duration-ui) var(--miser-ease);
+}
+.miser-btn:hover { opacity: 0.85; }
+
+.miser-btn-ghost {
+  color: var(--miser-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--miser-ink-3);
+  padding-bottom: 2px;
+  font-family: var(--miser-sans);
+}
+
+/* Receipt / ledger block */
+.miser-receipt {
+  background: var(--miser-paper-2);
+  border: 1px solid var(--miser-line);
+  border-radius: var(--miser-radius);
+  padding: 28px 32px;
+  font-family: var(--miser-mono);
+}
+.miser-receipt .row {
+  display: flex; justify-content: space-between;
+  padding: 8px 0; font-size: 13px; color: var(--miser-ink-2);
+}
+.miser-receipt .row .amt { color: var(--miser-accent); }
+.miser-receipt .total {
+  margin-top: 12px; padding-top: 16px;
+  border-top: 1px solid var(--miser-line);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.miser-receipt .total .big {
+  font-family: var(--miser-serif); font-weight: 400;
+  font-size: 32px; color: var(--miser-accent);
+  letter-spacing: -0.01em;
+}
+
+/* Ledger Line brand device as a reusable element */
+.miser-ledger-line {
+  width: 140px; height: 12px; position: relative;
+  display: inline-block;
+}
+.miser-ledger-line::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 2px; background: var(--miser-ink);
+}
+.miser-ledger-line::after {
+  content: ""; position: absolute; left: 60%; top: 0; bottom: 0;
+  width: 2px; background: var(--miser-accent);
+}
