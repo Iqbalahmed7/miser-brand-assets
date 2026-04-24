@@ -1,0 +1,312 @@
+/**
+ * MISER BRAND FOUNDATION
+ * ═══════════════════════════════════════════════════════════════════════════
+ *
+ * THIS FILE IS THE SINGLE SOURCE OF TRUTH FOR ALL MISER TYPOGRAPHY & COLOR
+ *
+ * Rules:
+ * - NO OTHER CSS FILE MAY OVERRIDE THESE TOKENS
+ * - NO INLINE STYLES ALLOWED (use classes only)
+ * - IMPORT THIS FIRST, BEFORE ANY OTHER CSS
+ * - DO NOT MODIFY THESE VALUES
+ *
+ * If you need a different color or font, you've violated the brand.
+ * Ask for brand approval before changing anything.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+:root {
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* COLOR PALETTE — FIXED, DO NOT CHANGE */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  --color-paper:      #F3EDE1;  /* Warm off-white background */
+  --color-paper-2:    #EBE4D4;  /* Secondary paper shade */
+  --color-ink:        #1C1A17;  /* Primary text color (warm black) */
+  --color-ink-2:      #5A544A;  /* Secondary text (lighter) */
+  --color-ink-3:      #8A8275;  /* Tertiary text (even lighter) */
+  --color-accent:     #2F5741;  /* Greenback accent (primary highlight) */
+  --color-accent-2:   #7A3A2A;  /* Seal accent (warnings only) */
+  --color-line:       rgba(28, 26, 23, 0.14);  /* Borders & dividers */
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* TYPOGRAPHY — SOURCE SERIF 4 + JETBRAINS MONO ONLY */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  /*
+   * CRITICAL: No Inter, no system fonts for body/display.
+   * Always fall back to serif/monospace, NEVER sans-serif.
+   */
+  --font-display:     'Source Serif 4', Georgia, serif;  /* All headings, display text */
+  --font-body:        'Source Serif 4', Georgia, serif;  /* All body prose */
+  --font-mono:        'JetBrains Mono', 'SF Mono', monospace;  /* Numbers, labels, data */
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* TYPOGRAPHY SCALE — LOCKED SIZES & WEIGHTS */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  /* Headings: weights 200 (thin) or 300 (light) ONLY */
+  --text-display:       64px;    /* Thin weight 200 */
+  --text-h1:            48px;    /* Thin weight 200 */
+  --text-h2:            36px;    /* Light weight 300 */
+  --text-h3:            24px;    /* Light weight 300 */
+
+  /* Body: weight 400 (regular) ONLY */
+  --text-lede:          22px;    /* Regular weight 400 */
+  --text-body:          16px;    /* Regular weight 400 */
+  --text-small:         14px;    /* Regular weight 400 */
+
+  /* Data: JetBrains Mono, weight 400-500 */
+  --text-kicker:        11px;    /* Uppercase, tracked */
+  --text-micro:         10px;    /* Smallest labels */
+  --text-mono-num:      14px;    /* Numeric data in body */
+
+  /* Line heights */
+  --line-display:       1.02;
+  --line-h1:            1.05;
+  --line-h2:            1.1;
+  --line-h3:            1.2;
+  --line-lede:          1.55;
+  --line-body:          1.72;    /* Generous for readability */
+  --line-small:         1.65;
+  --line-mono:          1.4;
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* SPACING & LAYOUT */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  --spacing-xs:         4px;
+  --spacing-sm:         8px;
+  --spacing-md:         12px;
+  --spacing-lg:         16px;
+  --spacing-xl:         24px;
+  --spacing-xxl:        32px;
+  --spacing-xxxl:       48px;
+
+  --radius:             4px;
+  --column-width:       58ch;     /* Editorial reading width */
+  --container-max:      1100px;   /* Dashboard container */
+
+  /* ────────────────────────────────────────────────────────────────────── */
+  /* ANIMATION */
+  /* ────────────────────────────────────────────────────────────────────── */
+
+  --ease-standard:      cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-enter:         cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast:      150ms;
+  --duration-base:      300ms;
+  --duration-slow:      600ms;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* GOOGLE FONTS IMPORT */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200;0,8..60,300;0,8..60,400;1,8..60,200;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* GLOBAL RESET & BASE STYLES */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  line-height: var(--line-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* TYPOGRAPHY CLASSES — USE THESE, NOT INLINE STYLES */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+.miser-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: 200;
+  line-height: var(--line-display);
+  letter-spacing: -0.015em;
+}
+
+.miser-h1 {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 200;
+  line-height: var(--line-h1);
+  letter-spacing: -0.015em;
+}
+
+.miser-h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  font-weight: 300;
+  line-height: var(--line-h2);
+  letter-spacing: -0.01em;
+}
+
+.miser-h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 300;
+  line-height: var(--line-h3);
+  letter-spacing: -0.005em;
+}
+
+.miser-lede {
+  font-family: var(--font-body);
+  font-size: var(--text-lede);
+  font-weight: 400;
+  line-height: var(--line-lede);
+}
+
+.miser-body {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: var(--line-body);
+}
+
+.miser-small {
+  font-family: var(--font-body);
+  font-size: var(--text-small);
+  font-weight: 400;
+  line-height: var(--line-small);
+}
+
+/* Monospace for data, labels, metadata */
+.miser-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--text-kicker);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.miser-micro {
+  font-family: var(--font-mono);
+  font-size: var(--text-micro);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-3);
+}
+
+.miser-mono {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  line-height: var(--line-mono);
+}
+
+.miser-mono-num {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-num);
+  font-weight: 400;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* ACCENT & EMPHASIS */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+em,
+.miser-accent {
+  font-style: italic;
+  color: var(--color-accent);
+  font-weight: inherit;
+}
+
+strong {
+  font-weight: 400;  /* No bold — let color & italics do the work */
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* COLOR UTILITIES */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+.text-paper       { color: var(--color-paper); }
+.text-ink         { color: var(--color-ink); }
+.text-ink-2       { color: var(--color-ink-2); }
+.text-ink-3       { color: var(--color-ink-3); }
+.text-accent      { color: var(--color-accent); }
+.text-accent-2    { color: var(--color-accent-2); }
+
+.bg-paper         { background-color: var(--color-paper); }
+.bg-paper-2       { background-color: var(--color-paper-2); }
+.bg-accent        { background-color: var(--color-accent); }
+.bg-accent-2      { background-color: var(--color-accent-2); }
+
+.border-line      { border-color: var(--color-line); }
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* SPACING UTILITIES */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+.p-xs   { padding: var(--spacing-xs); }
+.p-sm   { padding: var(--spacing-sm); }
+.p-md   { padding: var(--spacing-md); }
+.p-lg   { padding: var(--spacing-lg); }
+.p-xl   { padding: var(--spacing-xl); }
+.p-xxl  { padding: var(--spacing-xxl); }
+
+.m-xs   { margin: var(--spacing-xs); }
+.m-sm   { margin: var(--spacing-sm); }
+.m-md   { margin: var(--spacing-md); }
+.m-lg   { margin: var(--spacing-lg); }
+.m-xl   { margin: var(--spacing-xl); }
+.m-xxl  { margin: var(--spacing-xxl); }
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* ACCESSIBILITY: REDUCE MOTION */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* ANTI-PATTERNS: BLOCKED */
+/* ═════════════════════════════════════════════════════════════════════════ */
+
+/* Prevent accidental use of unsupported fonts */
+.sans-serif,
+.helvetica,
+.arial,
+.inter {
+  font-family: var(--font-body) !important;
+}
+
+/* Prevent pure black or white */
+body {
+  color: var(--color-ink);
+  background: var(--color-paper);
+}
+
+/* Prevent unsupported font weights */
+.bold,
+b,
+strong {
+  font-weight: 400 !important;  /* Never bold — serif carries weight */
+}
+
+/* ═════════════════════════════════════════════════════════════════════════ */
+/* END OF FOUNDATION */
+/* ═════════════════════════════════════════════════════════════════════════ */
